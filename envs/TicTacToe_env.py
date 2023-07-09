@@ -1,4 +1,6 @@
 import gym
+from gym import spaces
+import pygame
 
 from TicTacToe_env_core import TicTacToe_env_core
 
@@ -10,6 +12,12 @@ class TicTacToe_env(gym.Env):
     
     def __init__(self, size=3, num_dim=2, dim=None, num_in_a_row=3, gravity_setting=None, players=(1, 1)):
         self._env = TicTacToe_env_core(size, num_dim, dim, num_in_a_row, gravity_setting, players)
+        
+        self.window_size = 512
+        self.observation_space = {
+            "board": self.map
+        }
+        self.action_space = spaces.Discrete(self.len_map)
         
         
     def init_screen(self):

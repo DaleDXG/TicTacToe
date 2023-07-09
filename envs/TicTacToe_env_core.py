@@ -1,8 +1,13 @@
 from BoardGameBase import BoardGameBase
 
-from gym import spaces
+import copy
 import numpy as np
-import pygame
+
+
+
+class DimentionMatchingError(Exception):
+    """Raise when dimention is not matching"""
+    pass
 
 
 
@@ -10,60 +15,113 @@ class TicTacToe_env_core(BoardGameBase):
     """
     Member variable:
     map
-    flagTermination
+    _flag_termination
     turn
     num_dim
-    dim
+    dims
     len_map
     num_in_a_row (win_condition, win_length)
     """
 
 
 
-    def __init__(self, size=3, num_dim=2, dim=None, num_in_a_row=3, gravity_setting=None, players=(1, 1)):
-        if dim == None:
+    def __init__(self, size=3, num_dim=2, dims=None, num_in_a_row=3, gravity_setting=None, num_players=2):
+        """
+        description
+        Args:
+        Returns:
+        Raises:
+        """
+        if dims == None:
             for i in range(num_dim):
-                dim[i] = size
+                dims[i] = size
         self.num_dim = num_dim
-        self.dim = dim
+        self.dims = dims
         self.num_in_a_row = num_in_a_row
-        
-        self.observation_space = spaces.Dict({
-            "board": 
-        })
+
+        self.len_map = 1
+        for i in self.dims:
+            self.len_map *= i
+        self.num_players = num_players
+
+        # winning checking direction
+        self._winning_check_direction = self._get_winning_check_direction(self.num_dim)
         
         self.reset()
 
+    # gym style functions. reset, step
+
     def reset(self):
-        self.len_map = 1
-        for i in self.dim:
-            self.len_map *= i
+        # map related
         self.map = [0] * self.len_map
-        self.flagTermination = False
-        self.turn = True # True for player1, flase for player2
+        self.count_pieces = 0
+        self.used_positions = []
+        self.leftover_positions = []
+        for i in range(self.len_map):
+            self.leftover_positions.append(i)
+        
+        # game state related
+        self._flag_termination = False
+        self.current_player = 1
     
     def step(self, action):
-        observation = None
+        observation = self.map
         reward = None
-        done = None
+        done = self._flag_termination
         info = None
         return observation, reward, done, info
     
+    # util functions
+
     def convert_coordinate_to_index(self, *args):
-        if type(args[0]) == tuple:
-            args[1] = args[0][1]
-            args[0] = args[0][0]
-        if len(args) == 1:
-            return args[0]
-        elif len(args) == 2:
-            return args[0] + args[1] * self.num_col
+        if type(args[0]) == tuple and len(args[0]) == self.num_dim:
+            return self.calculate_coordinate_to_index(args[0])
+        elif len(args) == self.num_dim:
+            return self.calculate_coordinate_to_index(args)
+        elif len(args) == 1:
+            return args
+    
+    def calculate_coordinate_to_index(self, coordinates):
+        index = 0
+        product = 1
+        for i in range(self.num_dim):
+            index += coordinates[i] * product
+            product *= self.dims[i]
+        return index
     
     def convert_index_to_coordinate(self, index):
-        x = index % self.num_col
-        y = index // self.num_col
-        return (x, y)
-        
-    # def __
+        dims = []
+        mask = 1
+        for i in range(self.num_dim - 1):
+            mask *= self.dims[i]
+        for i in range(self.num_dim):
+            dims.insert(0, int(index // mask))
+            index %= mask
+            mask /= self.dims[-(i+1)]
+        return dims
+    
+    @staticmethod
+    def _get_winning_check_direction(num_dim):
+        winning_check_direction = [[]]
+        for i in range(num_dim):
+            count = len(winning_check_direction)
+            while count > 0:
+                item = winning_check_direction.pop(0)
+                for value in (1,0,-1):
+                    item_copy = item.copy()
+                    item_copy.append(value)
+                    winning_check_direction.append(item_copy)
+                count -= 1
+            winning_check_direction.pop()
+        winning_check_direction.pop()
+        return winning_check_direction
+    
+    def _calculate_according_relative_coordinates(self, coordinates, relative_coordinates):
+        # could check DimentionMatchingError
+        result = []
+        for i in range(len(coordinates)):
+            result = coordinates[i] + relative_coordinates[i]
+        return result
 
     def display_console(self):
         #
@@ -76,24 +134,37 @@ class TicTacToe_env_core(BoardGameBase):
                 else:
                     print('B', end='')
             print('') # start a new line
+
+    # game logic functions
     
     # add piece according to the turn
-    def addPiece(self, row, column):
-        num = row * 3 + column
-        if self.map[num] == 0:
-            if self.turn:
-                self.map[num] = 1
-            else:
-                self.map[num] = -1
-            self.turn = not self.turn
+    def _add_piece(self, *coordinates):
+        index = self.convert_coordinate_to_index(coordinates)
+        if self.map[index] == 0:
+            self.map[index] = self.current_player
+            # actually, ((current_player - 1) + 1) % num_players + 1
+            self.current_player = self.current_player % self.num_players + 1
+            self.count_pieces += 1
+            self.used_positions.append(index)
+            self.leftover_positions.remove(index)
             return True
         else:
             return False
+    
+    def _check_valid_coordinates(self, coordinates):
+        # if len(coordinates) != self.num_dim:
+        #     raise DimentionMatchingError
+        for i in range(self.num_dim):
+            if coordinates[i] < 0:
+                return False
+            if coordinates[i] > self.dims[i] - 1:
+                return False
+        return True
 
     # 0 for no one won the game yet
     # 1 for player1 won
     # 2 for player2 won
-    def checkWinning(self, board = None):
+    def _check_winning(self, board = None):
         if board == None:
             board = self.map
             flagNoInput = True
@@ -102,71 +173,71 @@ class TicTacToe_env_core(BoardGameBase):
         for i in range(3):
             if board[i * 3] != 0 and board[i * 3] == board[i * 3 + 1] and board[i * 3 + 1] == board[i * 3 + 2]:
                 if flagNoInput:
-                    self.flagTermination = True
+                    self._flag_termination = True
                 if board[i * 3] == 1:
                     return 1
                 else:
                     return -1
             if board[i] != 0 and board[i] == board[i + 3] and board[i] == board[i + 6]:
                 if flagNoInput:
-                    self.flagTermination = True
+                    self._flag_termination = True
                 if self.map[i] == 1:
                     return 1
                 else:
                     return -1
         if board[0] != 0 and board[0] == board[4] and board[4] == board[8]:
             if flagNoInput:
-                self.flagTermination = True
+                self._flag_termination = True
             if board[0] == 1:
                 return 1
             else:
                 return -1
         if board[2] != 0 and board[2] == board[4] and board[4] == board[6]:
             if flagNoInput:
-                self.flagTermination = True
+                self._flag_termination = True
             if board[2] == 1:
                 return 1
             else:
                 return -1
         return 0
     
-    def checkFull(self, board = None):
+    def _check_full(self, board = None):
+        # method 1
         if board == None:
-            board = self.map
-            flagNoInput = True
-        else:
-            flagNoInput = False
-        for i in range(9):
+            if self.count_pieces >= self.len_map:
+                self._flag_termination = True
+                return True
+            else:
+                return False
+        # method 2
+        for i in range(self.len_map):
             if board[i] == 0:
                 return False
-        if flagNoInput:
-            self.flagTermination = True
         return True
 
     def isTerminated(self):
-        return self.flagTermination
-
-
-
-class GameState_TicTacToe:    
-    winners = [
-        [1,1,1,]
-    ]
+        return self._flag_termination
     
-    def __init__(self, board, playerTurn):
-        self.board = board
-        # 该谁落子是谁的回合
-        self.playerTurn = playerTurn
-    
-    def get_state(self):
-        pass
-    
-    def set_state(self):
-        pass
+    def checkTermination(self, board = None):
+        if board == None:
+            board = self.map
+        if self.checkFull(board) or self.checkWinning(board) != 0:
+            return True
+        else:
+            return False
 
 
 
 if __name__ == "__main__":
-    t3 = TicTacToe(num_dim = 3, dim=(3,4,4))
+    t3 = TicTacToe_env_core(num_dim = 3, dims=(3,4,4))
     print(t3.len_map)
     print(len(t3.map))
+    a = t3.convert_coordinate_to_index(0,0,0)
+    print(a)
+    print(t3.convert_index_to_coordinate(a))
+    a = t3.convert_coordinate_to_index((1,1,1))
+    print(a)
+    print(t3.convert_index_to_coordinate(a))
+    a = t3.convert_coordinate_to_index((2,3,3))
+    print(a)
+    print(t3.convert_index_to_coordinate(a))
