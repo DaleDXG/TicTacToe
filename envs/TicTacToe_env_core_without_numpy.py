@@ -1,5 +1,4 @@
 from BoardGameBase import BoardGameBase
-import numpy as np
 
 
 
@@ -12,14 +11,6 @@ class DimentionMatchingError(Exception):
 
 class TicTacToe_env_core(BoardGameBase):
     """
-    Member variable:
-    map
-    _flag_termination
-    turn
-    num_dim
-    dims
-    len_map
-    num_in_a_row (win_condition, win_length)
     """
 
 
@@ -256,4 +247,4 @@ class TicTacToe_env_core(BoardGameBase):
 
 
 if __name__ == "__main__":
-    t3 = TicTacToe_env_core(size=3, num_dim=2)
+    t3 = TicTacToe_env_core(dims=(3,3))
