@@ -58,8 +58,9 @@ class TicTacToe_env_core(BoardGameBase):
         self.current_player = 1
     
     def step(self, action):
-        if self._flag_termination:
-            self.reset()
+        assert self._flag_termination == False, (
+        'Cant call step() once episode finished (call reset() instead)')
+        
         action_coordinates = self.calculate_index_to_coordinate(action)
         self._add_piece(action)
         if self._check_full():
