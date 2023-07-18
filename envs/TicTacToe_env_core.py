@@ -1,6 +1,6 @@
-from BoardGameBase import BoardGameBase
-from Config import InputConfig
-from Gravity import GravitySetting
+from envs.BoardGameBase import BoardGameBase
+from envs.Config import InputConfig
+from envs.Gravity import GravitySetting
 
 import numpy as np
 
@@ -32,8 +32,7 @@ class TicTacToe_env_core(BoardGameBase):
         Returns:
         Raises:
         """
-        if input_config == None:
-            input_config = InputConfig()
+        assert input_config != None ('A InputConfig is needed before create an environment.')
         self._config = input_config
         
         self.num_dim = input_config['num_dim']
@@ -64,6 +63,7 @@ class TicTacToe_env_core(BoardGameBase):
         # game state related
         self._flag_termination = False
         self.current_player = 1
+        self.previous_player = 0
     
     def step(self, action):
         """
@@ -84,15 +84,24 @@ class TicTacToe_env_core(BoardGameBase):
         if self._check_num_in_a_row_2_direction(action):
             self._flag_termination = True
             reward = 1
+        self.previous_player = self.current_player
         # actually, ((current_player - 1) + 1) % num_players + 1
         self.current_player = self.current_player % self.num_players + 1
 
-        observation = self.map
+        observation = self._get_obs()
         done = self._flag_termination
-        info = {
+        info = self._get_info()
+        return observation, reward, done, info
+    
+    def _get_obs(self):
+        return {
+            'board': self.map
+        }
+    
+    def _get_info(self):
+        return {
             'leftover_actions': self.leftover_positions
         }
-        return observation, reward, done, info
     
     # util functions
 

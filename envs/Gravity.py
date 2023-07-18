@@ -3,7 +3,7 @@
 
 class GravitySetting(object):
 
-    modes = ('along_axis', 'toward_axis', 'toward_point')
+    modes = ('no_gravity', 'along_axis', 'toward_axis', 'toward_point')
 
     def __init__(self, input_config=None):
         assert input_config['gravity_mode'] in GravitySetting.modes (
