@@ -1,5 +1,4 @@
 from random import randint
-import Game
 import numpy as np
 from sys import float_info
 import copy

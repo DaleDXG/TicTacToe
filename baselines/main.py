@@ -1,4 +1,3 @@
-import Game
 import MCTS as mc
 import copy
 

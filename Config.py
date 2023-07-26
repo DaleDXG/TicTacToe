@@ -2,6 +2,8 @@
 
 
 class InputConfig(object):
+
+    env_type = ['TicTacToe']
     
     def __init__(self, **kwargs):
         self._values = {
@@ -14,13 +16,24 @@ class InputConfig(object):
             'dims': None, # shape
             'num_in_a_row': 3, # win_condition, win_length
             'num_players': 2,
-            'flag_compute_used_left': False,
-            'len_map': 0, # no need to set, will be automatically compute according dims
+            'flag_compute_used_left': True,
+            # no need to set
+            'len_map': 0, # will be automatically compute according dims
             
             # gravity needed params
             'gravity_mode': 'no_gravity', # other possible mode, see modes in GravitySetting
-            'gravity_along_axis': 0
+            # mode along_axis
+            'gravity_along_axis': 0,
+            'gravity_direction_along_axis': 1, # 1 or -1
+
+            # agent needed params
+            'env_name': 'TicTacToe',
+            'action_shape': None,
+
+            # MCTS related params
+            'c_puct': 1
         }
+
         if len(kwargs) > 0:
             self._values.update(kwargs)
 
@@ -32,6 +45,12 @@ class InputConfig(object):
         self._values['len_map'] = 1
         for i in self._values['dims']:
             self._values['len_map'] *= i
+        
+        assert self._values['env_name'] in InputConfig.env_type, ('This environment is not supported. Please develop the related code.')
+        
+        if self._values['env_name'] == 'TicTacToe':
+            self._values['action_size'] = self._values['len_map']
+        
     
     
     def __getitem__(self, key):
@@ -42,9 +61,3 @@ class InputConfig(object):
     
     def __contains__(self, key):
         return key in self._values
-
-
-
-if __name__ == '__main__':
-    config = InputConfig(dims=(3,4,4))
-    print(config['num_dim'])

@@ -1,6 +1,7 @@
 from envs.BoardGameBase import BoardGameBase
-from envs.Config import InputConfig
 from envs.Gravity import GravitySetting
+from Config import InputConfig
+import util
 
 import numpy as np
 
@@ -32,19 +33,22 @@ class TicTacToe_env_core(BoardGameBase):
         Returns:
         Raises:
         """
-        assert input_config != None ('A InputConfig is needed before create an environment.')
+        assert input_config != None, ('A InputConfig is needed before create an environment.')
         self._config = input_config
         
         self.num_dim = input_config['num_dim']
         self.dims = input_config['dims']
         self.num_in_a_row = input_config['num_in_a_row']
         self._flag_compute_used_left = input_config['flag_compute_used_left']
-
         self.len_map = input_config['len_map']
         self.num_players = input_config['num_players']
 
+        self._gravity = None
+        if input_config['gravity_mode'] != 'no_gravity':
+            self._gravity = GravitySetting(input_config)
+
         # winning checking direction
-        self._winning_check_direction = self._get_winning_check_direction(self.num_dim)
+        self._winning_check_direction = self._get_winning_check_directions(self.num_dim)
         
         self.reset()
 
@@ -141,7 +145,7 @@ class TicTacToe_env_core(BoardGameBase):
         return tuple(coordinates)
     
     @staticmethod
-    def _get_winning_check_direction(num_dim):
+    def _get_winning_check_directions(num_dim):
         """
         """
         winning_check_direction = [[]]
@@ -159,19 +163,6 @@ class TicTacToe_env_core(BoardGameBase):
         for i in range(len(winning_check_direction)):
             winning_check_direction[i] = tuple(winning_check_direction[i])
         return winning_check_direction
-    
-    def _add_coordinates(self, coordinates_1, coordinates_2):
-        # could check DimentionMatchingError
-        result = []
-        for i in range(len(coordinates_1)):
-            result.append(coordinates_1[i] + coordinates_2[i])
-        return tuple(result)
-    
-    def _multiply_coordinates(self, coordinates, multiplier):
-        result = []
-        for i in range(len(coordinates)):
-            result.append(coordinates[i] * multiplier)
-        return tuple(result)
 
     def display_console(self):
         # haven't complete
@@ -183,6 +174,8 @@ class TicTacToe_env_core(BoardGameBase):
     def _add_piece(self, *coordinates):
         coordinates = self._convert_to_coordinates(coordinates)
         if self.map[coordinates] == 0:
+            if self._gravity != None:
+                coordinates = self._gravity.fall(self.map, coordinates)
             self.map[coordinates] = self.current_player
             self.count_pieces += 1
             if self._flag_compute_used_left:
@@ -210,7 +203,7 @@ class TicTacToe_env_core(BoardGameBase):
             return 0
         for direction in self._winning_check_direction:
             for distance in range(self.num_in_a_row-1, -1, -1):
-                position = self._add_coordinates(coordinates, self._multiply_coordinates(direction, distance))
+                position = util.add_coordinates(coordinates, util.multiply_coordinates(direction, distance))
                 if not self._check_valid_coordinates(position):
                     break
                 if position_value != self.map[position]:
@@ -226,14 +219,14 @@ class TicTacToe_env_core(BoardGameBase):
         for direction in self._winning_check_direction:
             count = 1
             for distance in range(1, self.num_in_a_row):
-                position = self._add_coordinates(coordinates, self._multiply_coordinates(direction, distance))
+                position = util.add_coordinates(coordinates, util.multiply_coordinates(direction, distance))
                 if not self._check_valid_coordinates(position):
                     break
                 if position_value != self.map[position]:
                     break
                 count += 1
             for distance in range(-1, -self.num_in_a_row, -1):
-                position = self._add_coordinates(coordinates, self._multiply_coordinates(direction, distance))
+                position = util.add_coordinates(coordinates, util.multiply_coordinates(direction, distance))
                 if not self._check_valid_coordinates(position):
                     break
                 if position_value != self.map[position]:
