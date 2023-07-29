@@ -1,7 +1,67 @@
 
 
+## Algorithm section
+
+INITIAL_RUN_NUMBER = None
+INITIAL_MODEL_VERSION = None
+INITIAL_MEMORY_VERSION = None
+
+absolute_path = None
+
+def initialise_config():
+    import os
+    global absolute_path
+    absolute_path = os.getcwd()
+
+def update_from_dict(obj, kwargs):
+    assert type(kwargs) == dict, ('kwargs is not a dictionary.')
+    for key, value in kwargs.items():
+        if hasattr(obj, key):
+            setattr(obj, key, value)
 
 class InputConfig(object):
+
+    def __init__(self, **kwargs):
+        pass
+    
+    def __getitem__(self, key):
+        return self._values[key]
+
+    def __setitem__(self, key, value):
+        self._values[key] = value
+    
+    def __contains__(self, key):
+        return key in self._values
+
+
+
+class InputConfig_Method(InputConfig):
+
+    def __init__(self, **kwargs):
+        # input params
+        self.env_name = 'TicTacToe'
+        self.batch_size = 10
+        self.learning_rate = 1
+        self.num_epochs = 10
+        ## agent params
+        self.action_shape = None
+        ## MLP
+        self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
+        self.isFlatten = False
+        ## MCTS
+        self.c_puct = 1
+
+        # update the default params according to kwargs
+        update_from_dict(self, kwargs)
+        
+        # assert self._values['env_name'] in InputConfig.env_type, ('This environment is not supported. Please develop the related code.')
+        
+        # if self._values['env_name'] == 'TicTacToe':
+        #     self._values['action_size'] = self._values['len_map']
+
+
+
+class InputConfig_Env(InputConfig):
 
     env_type = ['TicTacToe']
     
@@ -25,13 +85,6 @@ class InputConfig(object):
             # mode along_axis
             'gravity_along_axis': 0,
             'gravity_direction_along_axis': 1, # 1 or -1
-
-            # agent needed params
-            'env_name': 'TicTacToe',
-            'action_shape': None,
-
-            # MCTS related params
-            'c_puct': 1
         }
 
         if len(kwargs) > 0:
@@ -46,18 +99,3 @@ class InputConfig(object):
         for i in self._values['dims']:
             self._values['len_map'] *= i
         
-        assert self._values['env_name'] in InputConfig.env_type, ('This environment is not supported. Please develop the related code.')
-        
-        if self._values['env_name'] == 'TicTacToe':
-            self._values['action_size'] = self._values['len_map']
-        
-    
-    
-    def __getitem__(self, key):
-        return self._values[key]
-
-    def __setitem__(self, key, value):
-        self._values[key] = value
-    
-    def __contains__(self, key):
-        return key in self._values

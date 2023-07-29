@@ -1,6 +1,7 @@
 import gym
 from gym import spaces
-import pygame
+# import pygame
+import pickle
 
 from envs.TicTacToe_env_core import TicTacToe_env_core
 
@@ -39,3 +40,11 @@ class TicTacToe_env(gym.Env):
     
     def self_play_map_view(self):
         return (self._env.map != 0) * ((self._env.map - self._env.previous_player) % self._env.num_players + 1)
+    
+    #
+
+    def get_state(self):
+        return pickle.dumps(self._env)
+
+    def set_state(self, state):
+        self._env = pickle.loads(state)

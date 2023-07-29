@@ -3,6 +3,30 @@ import numpy as np
 
 
 
+class Residual_CNN_Unit(tf.keras.Model):
+    def __init__(self, num_channels, use_1x1conv=False, strides=1):
+        super().__init__()
+        self.conv1 = tf.keras.layers.Conv2D(
+            num_channels, kernel_size=3, padding='same', strides=strides)
+        self.conv2 = tf.keras.layers.Conv2D(
+            num_channels, kernel_size=3, padding='same')
+        if use_1x1conv:
+            self.conv3 = tf.keras.layers.Conv2D(
+                num_channels, kernel_size=1, strides=strides)
+        else:
+            self.conv3 = None
+        self.bn1 = tf.keras.layers.BatchNormalization()
+        self.bn2 = tf.keras.layers.BatchNormalization()
+
+    # forward
+    def call(self, X):
+        Y = tf.keras.activations.relu(self.bn1(self.conv1(X)))
+        Y = self.bn2(self.conv2(Y))
+        if self.conv3 is not None:
+            X = self.conv3(X)
+        Y += X
+        return tf.keras.activations.relu(Y)
+
 ###定义模型
 class res_model(tf.nn):
     def __init__(self, reg_const, learning_rate, input_dim, output_dim):

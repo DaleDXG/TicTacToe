@@ -1,4 +1,4 @@
-import MCTS as mc
+import baselines.method_MCTS as mc
 import copy
 
 # actions_left = [
@@ -64,7 +64,7 @@ def process(game, root):
 
 if __name__ == "__main__":
     # pass
-
+    
     T3 = Game.TicTacToe()
     root = mc.Node(0, Game.GameState_TicTacToe([0] * 9, 1))
     # mcts = mc.MCTS(root, 1)

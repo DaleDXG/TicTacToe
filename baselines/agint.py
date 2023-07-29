@@ -1,4 +1,4 @@
-import MCTS
+import baselines.method_MCTS as method_MCTS
 
 class Agent():
     
