@@ -1,9 +1,11 @@
-import logging
+
 import Config
+import logging
 import tensorflow as tf
 
-import d2l
 from IPython import display
+from matplotlib import pyplot as plt
+import d2l
 
 
 ## common part
@@ -26,6 +28,12 @@ def copy_list(list):
     for item in list:
         result.append(item)
     return result
+
+def update_from_dict(obj, kwargs):
+    assert type(kwargs) == dict, ('kwargs is not a dictionary.')
+    for key, value in kwargs.items():
+        if hasattr(obj, key):
+            setattr(obj, key, value)
 
 
 ## logging part
@@ -51,6 +59,8 @@ def load_data(data, batch_size, resize=None):
 
 
 ### d2l copy
+
+size = lambda a: tf.size(a).numpy()
 
 def load_data_fashion_mnist(batch_size, resize=None):
     """Download the Fashion-MNIST dataset and then load it into memory."""
@@ -92,12 +102,12 @@ class Animator:
         # Incrementally plot multiple lines
         if legend is None:
             legend = []
-        d2l.use_svg_display()
-        self.fig, self.axes = d2l.plt.subplots(nrows, ncols, figsize=figsize)
+        display.set_matplotlib_formats('svg')
+        self.fig, self.axes = plt.subplots(nrows, ncols, figsize=figsize)
         if nrows * ncols == 1:
             self.axes = [self.axes,]
         # Use a lambda function to capture arguments
-        self.config_axes = lambda: d2l.set_axes(self.axes[
+        self.config_axes = lambda: set_axes(self.axes[
             0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
         self.X, self.Y, self.fmts = None, None, fmts
 
@@ -123,22 +133,50 @@ class Animator:
         display.display(self.fig)
         display.clear_output(wait=True)
 
+# Defined in file: ./chapter_preliminaries/calculus.md
+def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
+    """Set the axes for matplotlib."""
+    axes.set_xlabel(xlabel)
+    axes.set_ylabel(ylabel)
+    axes.set_xscale(xscale)
+    axes.set_yscale(yscale)
+    axes.set_xlim(xlim)
+    axes.set_ylim(ylim)
+    if legend:
+        axes.legend(legend)
+    axes.grid()
+
 # Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md
 def accuracy(y_hat, y):
     """Compute the number of correct predictions."""
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
-        y_hat = d2l.argmax(y_hat, axis=1)
-    cmp = d2l.astype(y_hat, y.dtype) == y
-    return float(d2l.reduce_sum(d2l.astype(cmp, y.dtype)))
+        y_hat = tf.argmax(y_hat, axis=1)
+    cmp = tf.cast(y_hat, y.dtype) == y
+    return float(tf.reduce_sum(tf.cast(cmp, y.dtype)))
 
 # Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md
 def evaluate_accuracy(net, data_iter):
     """Compute the accuracy for a model on a dataset."""
     metric = Accumulator(2)  # No. of correct predictions, no. of predictions
     for X, y in data_iter:
-        metric.add(accuracy(net(X), y), d2l.size(y))
+        metric.add(accuracy(net(X), y), size(y))
     return metric[0] / metric[1]
 
+# Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md
+def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):
+    """Train a model (defined in Chapter 3)."""
+    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
+                        legend=['train loss', 'train acc', 'test acc'])
+    for epoch in range(num_epochs):
+        train_metrics = train_epoch_ch3(net, train_iter, loss, updater)
+        test_acc = evaluate_accuracy(net, test_iter)
+        animator.add(epoch + 1, train_metrics + (test_acc,))
+    train_loss, train_acc = train_metrics
+    assert train_loss < 0.5, train_loss
+    assert train_acc <= 1 and train_acc > 0.7, train_acc
+    assert test_acc <= 1 and test_acc > 0.7, test_acc
+
+# Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md
 def train_epoch_ch3(net, train_iter, loss, updater):
     """The training loop defined in Chapter 3."""
     # Sum of training loss, sum of training accuracy, no. of examples
@@ -166,17 +204,3 @@ def train_epoch_ch3(net, train_iter, loss, updater):
         metric.add(l_sum, accuracy(y_hat, y), tf.size(y))
     # Return training loss and training accuracy
     return metric[0] / metric[2], metric[1] / metric[2]
-
-def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):
-    """Train a model (defined in Chapter 3)."""
-    
-    animator = Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0.3, 0.9],
-                        legend=['train loss', 'train acc', 'test acc'])
-    for epoch in range(num_epochs):
-        train_metrics = train_epoch_ch3(net, train_iter, loss, updater)
-        test_acc = evaluate_accuracy(net, test_iter)
-        animator.add(epoch + 1, train_metrics + (test_acc,))
-    train_loss, train_acc = train_metrics
-    assert train_loss < 0.5, train_loss
-    assert train_acc <= 1 and train_acc > 0.7, train_acc
-    assert test_acc <= 1 and test_acc > 0.7, test_acc

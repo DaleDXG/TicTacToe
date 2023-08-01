@@ -1,8 +1,0 @@
-import envs
-from Config import InputConfig_Env
-from envs.TicTacToe_env import TicTacToe_env
-
-input_config = InputConfig_Env(size=3, num_dim=2, flag_self_play_view=True)
-# input_config = InputConfig_Env(size=7, num_dim=2, num_in_a_row=4, gravity_mode='along_axis', flag_self_play_view=True)
-env = TicTacToe_env(input_config)
-

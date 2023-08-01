@@ -40,14 +40,15 @@ class InputConfig_Method(InputConfig):
     def __init__(self, **kwargs):
         # input params
         self.env_name = 'TicTacToe'
-        self.batch_size = 10
         self.learning_rate = 1
         self.num_epochs = 10
+        self.batch_size = 32
+        self.network_type = 'mlp'
         ## agent params
         self.action_shape = None
         ## MLP
         self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
-        self.isFlatten = False
+        self.is_flatten = False
         ## MCTS
         self.c_puct = 1
 
