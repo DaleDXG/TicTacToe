@@ -1,2 +1,2 @@
-import baselines.common
-import baselines.dqn
+import model_baselines.common
+import model_baselines.dqn

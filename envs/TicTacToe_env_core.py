@@ -167,6 +167,7 @@ class TicTacToe_env_core(BoardGameBase):
     def display_console(self):
         # haven't complete
         print(self.map)
+        print()
 
     # game logic functions
     

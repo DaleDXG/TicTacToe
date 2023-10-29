@@ -1,21 +1,4 @@
-
-# abandent
-
-import baselines.method_MCTS as mc
-import copy
-
-# actions_left = [
-#     (0, 0),
-#     (0, 1),
-#     (0, 2),
-#     (1, 0),
-#     (1, 1),
-#     (1, 2),
-#     (2, 0),
-#     (2, 1),
-#     (2, 2),
-# ]
-actions_left = [0,1,2,3,4,5,6,7,8]
+import model_baselines.mcts.mcts as mcts
 
 
 
@@ -42,6 +25,62 @@ def wfs(root_stats):
 # 五月18 prob:
 # 1. board containing pieces more than expect
 # 2. nagetive score get many visit
+
+class Agent:
+
+    def __init__(self, input_config):
+        assert input_config != None, ('A InputConfig is needed before create an environment.')
+
+        self.state_size = input_config['dims']
+        self.action_size = input_config['action_size']
+
+        self.c_puct = input_config['c_puct']
+
+        self.MCTSsimulations = None
+        self.model = None
+
+        self.mcts = None
+
+        self.train_overall_loss = []
+        self.train_value_loss = []
+        self.train_policy_loss = []
+        self.val_overall_loss = []
+        self.val_value_loss = []
+        self.val_policy_loss = []
+
+    def step(self, state):
+        pass
+    
+    def simulate(self):
+        pass
+
+    def act(self, state, tau):
+        pass
+
+    def get_preds(self, state):
+        pass
+
+    def evaluateLeaf(self, leaf, value, done, breadcrumbs):
+        pass
+
+    def getAV(self, tau):
+        pass
+
+    def chooseAction(self, pi, values, tau):
+        pass
+
+    def replay(self, ltmemory):
+        pass
+
+    def predict(self, state):
+        pass
+
+    def buildMCTS(self, state):
+        self.root = mcts.Node(state)
+        self.tree = mcts.MCTS(self.root, self.c_puct)
+
+    def changeRootMCTS(self, state):
+        pass
     
 def process(game, root):
     mcts = mc.MCTS(root, 1)
@@ -70,28 +109,5 @@ if __name__ == "__main__":
     
     T3 = Game.TicTacToe()
     root = mc.Node(0, Game.GameState_TicTacToe([0] * 9, 1))
-    # mcts = mc.MCTS(root, 1)
-    # mcts.Simulation_forBoardGame_RandomStrategy(T3, actions_left)
-    # print(actions_left)
-    # print('winning ' + str(T3.checkWinning()))
-    # T3.display_console()
-    process(T3, root)
 
-    # T3 = Game.TicTacToe()
-    # for i in range(3):
-    #     for j in range(3):
-    #         print('winning ' + str(T3.checkWinning()))
-    #         print('full ' + str(T3.checkFull()))
-    #         T3.display_console()
-    #         T3.addPiece(i, j)
-    #         print('')
-    # print('winning ' + str(T3.checkWinning()))
-    # print('full ' + str(T3.checkFull()))
-    # T3.display_console()
-    
-    # mcts = mc.MCTS(mc.Node(0, Game.GameState_TicTacToe([0] * 9, 1)), 1)
-    # a = Game.TicTacToe()
-    # b = copy.deepcopy(a)
-    # mcts.Simulation_forBoardGame_RandomStrategy(b, [0,1,2,3,4,5,6,7,8])
-    # print(a.map)
-    # print(b.map)
+    process(T3, root)

@@ -3,7 +3,7 @@ import util
 from Config import InputConfig_Env
 from Config import InputConfig_Method
 from envs.TicTacToe_env import TicTacToe_env
-from baselines.method_MLP import MLP
+from model_baselines.mlp import MLP
 
 input_config_env = InputConfig_Env(size=3, num_dim=2, flag_self_play_view=True)
 # input_config_env = InputConfig_Env(size=7, num_dim=2, num_in_a_row=4, gravity_mode='along_axis', flag_self_play_view=True)

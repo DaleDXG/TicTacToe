@@ -34,8 +34,41 @@ class InputConfig(object):
         return key in self._values
 
 
+    # 官网教程 keras
+    # 图像分类
+    # optimizer adam
+    # loss tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    # metrics=['accuracy']
+    # 文本分类
+    # optimizer adam
+    # loss binary_crossentropy
+    # metrics=['accuracy']
+    # TF Hub 文本分类
+    # optimizer adam
+    # loss tf.keras.losses.BinaryCrossentropy(from_logits=True)
+    # metrics=['accuracy']
+    # 回归
+    # tf.keras.optimizers.RMSprop(0.001)
+    # loss mse
+    # metrics=['mae', 'mse']
+    # mse MeanSquaredError
+    # 保存和加载
+    # metrics=[tf.keras.metrics.SparseCategoricalAccuracy()]
+    # 使用 Keras Tuner 调整超参数
+    # optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate)
+    # loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+    # optimizers.Adam() Adaptive Moment Estimation
+    # self.optimizer = optimizers.Adam()
+    # optimizers.SGD(learning_rate) Stochastic Gradient Descent, SGD
+    # self.optimizer = optimizers.SGD(learning_rate=self.learning_rate)
+
 
 class InputConfig_Method(InputConfig):
+
+    # loss 可以直接在 compile 里用tf.keras.losses对象
+    optimizer_type = ['adam']
+    loss_type = ['binary_crossentropy', 'mse', 'sparse_categorical_crossentropy']
+
 
     def __init__(self, **kwargs):
         # input params
@@ -43,12 +76,24 @@ class InputConfig_Method(InputConfig):
         self.learning_rate = 1
         self.num_epochs = 10
         self.batch_size = 32
+        self.max_episodes = 1000
+        self.max_steps_per_episode = 1000
         self.network_type = 'mlp'
         ## agent params
-        self.action_shape = None
+        self.shape_action = None
+        self.shape_feature = None
+        ## DQN
+        self.reward_decay = 0.9 # gamma
+        self.epsilon_greedy = 0.9
+        self.memory_size = 500
+        self.epsilon_greedy_decrement = None
+        self.output_graph = False
         ## MLP
         self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
+        self.network = None
         self.is_flatten = False
+        self.loss = None
+        self.optimizer = None
         ## MCTS
         self.c_puct = 1
 
