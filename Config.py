@@ -88,6 +88,7 @@ class InputConfig_Method(InputConfig):
         self.memory_size = 500
         self.epsilon_greedy_decrement = None
         self.output_graph = False
+        self.update_freq = 200
         ## MLP
         self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
         self.network = None
@@ -122,7 +123,7 @@ class InputConfig_Env(InputConfig):
             'dims': None, # shape
             'num_in_a_row': 3, # win_condition, win_length
             'num_players': 2,
-            'flag_compute_used_left': True,
+            'flag_compute_used_left': True, # 统计 有子位置和空余位置
             # no need to set
             'len_map': 0, # will be automatically compute according dims
             

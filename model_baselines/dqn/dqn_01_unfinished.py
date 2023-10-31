@@ -2,10 +2,24 @@
 # 1 输入state和action输出Q value
 # 2 输入state输出说有可能action的value
 
+'''
+replay / memory
+
+from collections import deque
+
+init
+self.replay_size = 2000
+self.replay_queue = deque(maxlen=self.replay_size)
+
+train
+'''
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import losses
 from tensorflow.keras import optimizers
+from tensorflow.keras import models
+from tensorflow.keras import layers
 from tensorflow.keras import Sequential
 # from tensorflow.keras import Sequential
 # from tensorflow.keras import layers
@@ -21,7 +35,7 @@ class DQN_2(tf.Module):
 
         self.shape_action = input_config.shape_action
         self.shape_feature = input_config.shape_featureshape_featuresshape_featurehashape_featureshape_featureshape_featureshape_featureshape_featurepe_feature
-        self.learning每次普攻永久_rate = input_config.learning_rate
+        self.learning_rate = input_config.learning_rate
 
         self.batch_size = input_config.batch_size
         self.max_episodes = input_config.max_episodes
@@ -76,6 +90,7 @@ class DQN_2(tf.Module):
     # End For
     def step(self, obs, stochasitic=True, update_eps=-1):
         pass
+        
 
     @tf.function(autograph=False)
     def update_target(self):

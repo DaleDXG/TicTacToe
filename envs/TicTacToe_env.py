@@ -28,7 +28,7 @@ class TicTacToe_env(gym.Env):
         self.window_size = 512
     
     def reset(self):
-        self._env.reset()
+        return self._env.reset()
 
     def step(self, action):
         observation, reward, done, info = self._env.step(action)

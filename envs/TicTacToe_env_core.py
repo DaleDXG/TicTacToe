@@ -39,7 +39,7 @@ class TicTacToe_env_core(BoardGameBase):
         self.num_dim = input_config['num_dim']
         self.dims = input_config['dims']
         self.num_in_a_row = input_config['num_in_a_row']
-        self._flag_compute_used_left = input_config['flag_compute_used_left']
+        self._flag_compute_used_left = input_config['flag_compute_used_left'] # 统计有子的位置和空余的位置
         self.len_map = input_config['len_map']
         self.num_players = input_config['num_players']
 
@@ -68,6 +68,8 @@ class TicTacToe_env_core(BoardGameBase):
         self._flag_termination = False
         self.current_player = 1
         self.previous_player = 0
+
+        return self._get_obs()
     
     def step(self, action):
         """

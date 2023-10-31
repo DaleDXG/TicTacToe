@@ -1,75 +1,20 @@
 
-# 两种思路：
-# 1 输入state和action输出Q value
-# 2 输入state输出说有可能action的value
-
-'''
-replay / memory
-
-from collections import deque
-
-init
-self.replay_size = 2000
-self.replay_queue = deque(maxlen=self.replay_size)
-
-train
-'''
-
-
 from collections import deque
 import random
 import numpy as np
-from tensorflow.keras import models, layers, optimizers, losses
+from tensorflow.keras import models, layers, optimizers
 
 class DQN(object):
 
     def __init__(self, input_config=None):
         """"""
-        self.input_config = input_config
-
-        self.shape_action = input_config.shape_action
-        self.shape_feature = input_config.shape_featureshape_featuresshape_featurehashape_featureshape_featureshape_featureshape_featureshape_featurepe_feature
-        self.learning_rate = input_config.learning_rate
-
-        self.batch_size = input_config.batch_size
-        self.max_episodes = input_config.max_episodes
-        self.max_steps_per_episode = input_config.max_steps_per_episode
-        # self.output_graph = False
-        # 
-        self.gamma = input_config.reward_decay # 奖励衰减
-        # self.replace_target_iter = input_config.replace_target_iter # 模型更新频率
-        self.update_freq = input_config.update_freq
-        self.memory_size = input_config.memory_size  # 训练集大小
-        self.epsilon_min = input_config.epsilon_greedy # 
-        self.epsilon_decrement = input_config.epsilon_greedy_decrement
-
-        self.init()
-    
-    def init(self):
         self.step = 0
-        self.replay_size = 2000
+        self.update_freq = 200 # 模型更新频率
+        self.replay_size = 2000 # 训练集大小
         self.replay_queue = deque(maxlen=self.replay_size)
         self.model = self.create_model()
         self.target_model = self.create_model()
 
-        self.epsilon = 1 if self.epsilon_decrement is not None else self.epsilon_min
-
-        # total learning step
-        self.learn_step_counter = 0
-        # initialise zero memory [s,a,r,s_]
-        self.memory = np.zeros((self.memory_size, util.shape_to_num(self.shape_feature) + 2))
-        self.memory_counter = 0
-
-        # consist of [target_net, evaluate_net]
-        self.evaluate_net = MLP(self.input_config)
-        self.evaluate_net.set_optimizer(optimizers.Adam())
-        # (y_true R+gamma*maxQ(s'), y_pred Q(s2))
-        self.evaluate_net.set_loss(losses.MSE())
-        self.target_net = self.evaluate_net
-
-        self.history = []
-
-    # ab
     def create_model(self):
         """创建一个隐藏层为100的神经网络"""
         STATE_DIM, ACTION_DIM = 2, 3
