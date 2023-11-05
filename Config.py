@@ -73,13 +73,14 @@ class InputConfig_Method(InputConfig):
     def __init__(self, **kwargs):
         # input params
         self.env_name = 'TicTacToe'
-        self.learning_rate = 1
+        self.learning_rate = 0.001 # 1
         self.num_epochs = 10
         self.batch_size = 32
-        self.max_episodes = 1000
+        self.max_episodes = 2000
         self.max_steps_per_episode = 1000
         self.network_type = 'mlp'
         ## agent params
+        self.shape_layers = None
         self.shape_action = None
         self.shape_feature = None
         ## DQN
@@ -89,6 +90,7 @@ class InputConfig_Method(InputConfig):
         self.epsilon_greedy_decrement = None
         self.output_graph = False
         self.update_freq = 200
+        self.flag_static_memory = False
         ## MLP
         self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
         self.network = None

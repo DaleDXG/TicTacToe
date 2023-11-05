@@ -2,6 +2,7 @@ import gym
 from gym import spaces
 # import pygame
 import pickle
+import random
 
 from envs.TicTacToe_env_core import TicTacToe_env_core
 
@@ -41,6 +42,11 @@ class TicTacToe_env(gym.Env):
     def self_play_map_view(self):
         return (self._env.map != 0) * ((self._env.map - self._env.previous_player) % self._env.num_players + 1)
     
+    def random_policy(self):
+        index = random.randint(0, len(self._env.leftover_positions)-1)
+        action = self._env.leftover_positions[index]
+        self._env.step(action)
+
     #
 
     def get_state(self):

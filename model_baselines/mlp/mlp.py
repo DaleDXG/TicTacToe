@@ -20,7 +20,7 @@ def build_mlp(layers_size, is_flatten=False):
     if len(layers_size) > 2:
         for i in range(1, len(layers_size) - 1):
             network.add(layers.Dense(layers_size[i], activation='relu'))
-    network.add(layers.Dense(layers_size[-1]))
+    network.add(layers.Dense(layers_size[-1], activation='linear'))
 
     return network
 

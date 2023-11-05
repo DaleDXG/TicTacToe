@@ -3,10 +3,12 @@ import Config
 import logging
 # import tensorflow as tf
 import pickle
+import numpy as np
+import copy
 
-from IPython import display
-from matplotlib import pyplot as plt
-import d2l
+# from IPython import display
+# from matplotlib import pyplot as plt
+# import d2l
 
 
 ## common part
@@ -46,11 +48,12 @@ def update_from_dict(obj, kwargs):
 
 def shape_to_num(shape):
     result = 1
-    if type(shape) == int:
-        result = shape
+    if type(shape) == int or type(shape) == np.int64:
+        return shape
     else:
         for i in shape:
-            result *= i
+            result *= shape_to_num(i)
+        return result
     # try:
     #     for i in shape:
     #         result *= i
@@ -60,7 +63,15 @@ def shape_to_num(shape):
     #         result = shape
     #     else:
     #         raise TypeError
-    return result
+
+def flatten_list(nested_list):
+    flat_list = []
+    for item in nested_list:
+        if isinstance(item, list):
+            flat_list.extend(flatten_list(item))
+        else:
+            flat_list.append(item)
+    return flat_list
 
 ## logging part
 

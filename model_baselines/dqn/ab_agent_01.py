@@ -66,3 +66,4 @@ class DQN(object):
 
         # 传入网络进行训练
         self.model.fit(s_batch, Q, verbose=0)
+        

@@ -66,8 +66,9 @@ class TicTacToe_env_core(BoardGameBase):
         
         # game state related
         self._flag_termination = False
-        self.current_player = 1
+        self.current_player = 1 # player number start from 1. I forgot why would I setted like this.
         self.previous_player = 0
+        self.winner = -1
 
         return self._get_obs()
     
@@ -76,20 +77,27 @@ class TicTacToe_env_core(BoardGameBase):
         Args:
         action, is a literable tuple or list, the coordinates of where the piece should be placed.
         """
-        assert self._flag_termination == False, (
-        'Cant call step() once episode finished (call reset() instead)')
-
-        action = self._convert_to_coordinates(action)
-
+        # assert self._flag_termination == False, (
+        # 'Cant call step() once episode finished (call reset() instead)')
         reward = 0
-        if not self._add_piece(action):
-            print("The position have already occupied")
-            return
-        if self._check_full():
-            self._flag_termination = True
-        if self._check_num_in_a_row_2_direction(action):
-            self._flag_termination = True
-            reward = 1
+        if self._flag_termination == False:
+            action = self._convert_to_coordinates(action)
+
+            if not self._add_piece(action):
+                print("The position have already occupied")
+                reward = -1
+                self._flag_termination = True
+
+            if self._check_full():
+                self._flag_termination = True
+            if self._check_num_in_a_row_2_direction(action):
+                self._flag_termination = True
+                self.winner = self.current_player
+                reward = 10
+        else:
+            if self.current_player == self.winner:
+                reward = 10
+
         self.previous_player = self.current_player
         # actually, ((current_player - 1) + 1) % num_players + 1
         self.current_player = self.current_player % self.num_players + 1
@@ -120,7 +128,9 @@ class TicTacToe_env_core(BoardGameBase):
             return args[0]
     
     def _convert_to_coordinates(self, args):
-        if type(args[0]) == tuple and len(args[0]) == self.num_dim:
+        if type(args) == int or type(args) == np.int64:
+            return self.calculate_index_to_coordinate(args)
+        elif type(args[0]) == tuple and len(args[0]) == self.num_dim:
             return args[0]
         elif len(args) == self.num_dim:
             return args
