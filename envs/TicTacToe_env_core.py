@@ -80,6 +80,7 @@ class TicTacToe_env_core(BoardGameBase):
         # assert self._flag_termination == False, (
         # 'Cant call step() once episode finished (call reset() instead)')
         reward = 0
+        print(action)
         if self._flag_termination == False:
             action = self._convert_to_coordinates(action)
 
@@ -108,6 +109,7 @@ class TicTacToe_env_core(BoardGameBase):
         return observation, reward, done, info
     
     def _get_obs(self):
+        self.display_console()
         return {
             'board': self.map
         }
@@ -185,7 +187,11 @@ class TicTacToe_env_core(BoardGameBase):
     
     # add piece according to the turn
     def _add_piece(self, *coordinates):
+        print(coordinates)
+        print(type(coordinates))
         coordinates = self._convert_to_coordinates(coordinates)
+        print(coordinates)
+        print(type(coordinates))
         if self.map[coordinates] == 0:
             if self._gravity != None:
                 coordinates = self._gravity.fall(self.map, coordinates)

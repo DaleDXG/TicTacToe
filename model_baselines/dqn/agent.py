@@ -69,27 +69,34 @@ class DQN(object):
     def build_mlp(self, layers_size, is_flatten=False):
 
         assert len(layers_size) > 1, ('Can not produce network with layer less than 2.')
-
+        print('layers_size : ', layers_size)
+        print('last layer', layers_size[-1])
         model = models.Sequential()
         if is_flatten:
             model.add(layers.Flatten())
         if len(layers_size) > 2:
             for i in range(1, len(layers_size) - 1):
                 model.add(layers.Dense(layers_size[i], activation='relu'))
-        model.add(layers.Dense(layers_size[-1], activation='linear'))
 
+        model.add(layers.Dense(layers_size[-1], activation='linear'))
+        
         model.compile(loss='mean_squared_error',
                       optimizer=optimizers.Adam(self.learning_rate),
                       metrics=['mse'])
-        
+
         return model
     
     def select_action(self, s):
         """预测动作"""
         # 刚开始时，加一点随机成分，产生更多的状态
-        if np.random.uniform() < self.epsilon - self.num_step * 0.0002:
-            return np.random.choice([0, 1, 2])
-        return np.argmax(self.eval_model.predict(np.array([s]))[0])
+        if np.random.uniform() < self.epsilon - self.num_step * self.epsilon_decrement:
+            self.selected_action = np.random.choice(self.shape_layers[-1])
+        else:
+            q_values = self.eval_model.predict(np.array([s]))[0]
+            print('q_values', str(q_values))
+            self.selected_action = np.argmax(q_values)
+            print('selected action', self.selected_action)
+        return self.selected_action
 
     def save_model(self, file_path='model_saved.h5'):
         print('model saved')
@@ -127,14 +134,13 @@ class DQN(object):
         print(history)
         self.history.append(history.history['mse'])
     
-    def step_reset(self, env_reset_callback):
-        self.current_state = env_reset_callback()
+    def step_reset(self, init_state):
+        self.current_state = init_state
         self.score = 0
 
-    def step(self, env_callback):
-        self.selected_action = self.select_action(self.current_state)
+    def step(self, next_s, reward, done, info):
+        # self.selected_action = self.select_action(self.current_state)
         # # next_s, reward, done, _ = env.step(a)
-        next_s, reward, done, info = env_callback(self.selected_action)
         self.remember(self.current_state, self.selected_action, next_s, reward)
         self.train()
         self.score += reward
@@ -145,3 +151,6 @@ class DQN(object):
             self.num_episode += 1
             return True
         return False
+    
+    def opponent_turn_update(self, state, reward, done=False):
+        self.current_state = state

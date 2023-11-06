@@ -6,10 +6,18 @@ def dqn_mlp_process(env_reset, env_step, env_random_step, agent, input_config):
 
     episodes = input_config.max_episodes # 1000
     for i in range(episodes):
-        agent.step_reset(env_reset)
+        print('run env reset')
+        init_state = env_reset()
+        print('run agent episode starting reset')
+        agent.step_reset(init_state)
         while True:
-            done = agent.step(env_step)
-            env_random_step()
+            print('run agent.select_action')
+            action = agent.select_action(agent.current_state)
+            next_s, reward, done, info = env_step(action)
+            print('run agent.step')
+            agent.step(next_s, reward, done, info)
+            s_r, reward_r, done_r, info_r = env_random_step()
+            agent.opponent_turn_update(s_r, reward_r)
             if done:
                 break
         # if np.mean(score_list[-10:]) > -160:

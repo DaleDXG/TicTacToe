@@ -2,8 +2,12 @@
 import sys
 import os
 sys.path.append(os.path.dirname(sys.path[0]))
+
 import util
 import numpy as np
+
+import Config
+from model_baselines.dqn.agent import DQN
 
 
 # import subprocess
@@ -75,14 +79,20 @@ import numpy as np
 #     print('fhaha!')
 
 
-def func1(int):
-    return int + 1
+# def func1(int):
+#     return int + 1
 
-def func2(callback):
-    a = 1
-    return callback(a)
+# def func2(callback):
+#     a = 1
+#     return callback(a)
 
-def func3(callback):
-    return callback(func1)
+# def func3(callback):
+#     return callback(func1)
 
-print(func3(func2))
+# print(func3(func2))
+
+
+
+model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
+                                         epsilon_greedy = 0)
+model = DQN(model_config)
