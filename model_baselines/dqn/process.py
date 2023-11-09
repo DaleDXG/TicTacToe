@@ -1,23 +1,23 @@
 
 import numpy as np
+from collections import deque
 import matplotlib.pyplot as plt
 
 def dqn_mlp_process(env_reset, env_step, env_random_step, agent, input_config):
 
     episodes = input_config.max_episodes # 1000
     for i in range(episodes):
-        print('run env reset')
+        # print('run env reset')
         init_state = env_reset()
-        print('run agent episode starting reset')
-        agent.step_reset(init_state)
+        # print('run agent episode starting reset')
+        agent.reset(init_state)
         while True:
-            print('run agent.select_action')
+            # print('run agent.select_action')
             action = agent.select_action(agent.current_state)
             next_s, reward, done, info = env_step(action)
-            print('run agent.step')
-            agent.step(next_s, reward, done, info)
+            # print('run agent.step')
             s_r, reward_r, done_r, info_r = env_random_step()
-            agent.opponent_turn_update(s_r, reward_r)
+            agent.step(s_r, reward, done, info)
             if done:
                 break
         # if np.mean(score_list[-10:]) > -160:
@@ -32,20 +32,47 @@ def dqn_mlp_process(env_reset, env_step, env_random_step, agent, input_config):
 
 colour_set = ['green', 'blue', 'yellow', 'red', 'purple']
 
-def dqn_mlp_selfplay_process(env_reset, env_step, agents, input_config):
+def dqn_inturn_multiplayer_process(env_reset, env_step, agents, input_config):
 
     episodes = input_config.max_episodes # 1000
-    index = 0
+    num_agents = len(agents)
+    assert num_agents > 0, ('There is no agent participating the game.')
+
+    flag_static_memory = input_config.flag_static_memory
+    idx_previous_agent = -1
+    idx_current_agent = 0
+    if num_agents == 1:
+        idx_next_agent = 0
+    else:
+        idx_next_agent = 1
     for i in range(episodes):
+        step = 0
+        done = False
+        count_down = num_agents
+        cache_replay = deque(maxlen=num_agents)
+        newest_state = None
+        init_state = env_reset()
         for agent in agents:
-            agent.step_reset(env_reset)
+            agent.reset(init_state)
         while True:
-            current_agent = agents[index]
-            print(current_agent)
-            done = current_agent.step(env_step)
+            if not done:
+                action = agent.select_action(agents[idx_current_agent].current_state)
+            else:
+                action = 0
+            newest_state, reward, done, info = env_step(action)
+            cache_replay.append([newest_state, reward, done, info])
+            if step >= num_agents:
+                agents[idx_next_agent].step(newest_state, cache_replay[0][1], cache_replay[0][2], cache_replay[0][3])
+
             if done:
-                break
-            index = (index + 1) % len(agents)
+                if count_down == 0:
+                    break
+                count_down -= 1
+
+            idx_previous_agent = idx_current_agent
+            idx_current_agent = idx_next_agent
+            idx_next_agent = (idx_next_agent + 1) % len(agents)
+            step += 1
         # if np.mean(score_list[-10:]) > -160:
         #     agent.save_model()
         #     break

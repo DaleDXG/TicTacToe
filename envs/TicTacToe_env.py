@@ -43,8 +43,12 @@ class TicTacToe_env(gym.Env):
         return (self._env.map != 0) * ((self._env.map - self._env.previous_player) % self._env.num_players + 1)
     
     def random_policy(self):
-        index = random.randint(0, len(self._env.leftover_positions)-1)
-        action = self._env.leftover_positions[index]
+        num_left_position = len(self._env.leftover_positions)-1
+        if num_left_position > 0:
+            index = random.randint(0, num_left_position)
+            action = self._env.leftover_positions[index]
+        else:
+            action = 0
         observation, reward, done, info = self._env.step(action)
         return observation, reward, done, info
 

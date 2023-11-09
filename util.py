@@ -5,6 +5,7 @@ import logging
 import pickle
 import numpy as np
 import copy
+from collections.abc import Iterable
 
 # from IPython import display
 # from matplotlib import pyplot as plt
@@ -67,7 +68,7 @@ def shape_to_num(shape):
 def flatten_list(nested_list):
     flat_list = []
     for item in nested_list:
-        if isinstance(item, list):
+        if isinstance(item, Iterable):
             flat_list.extend(flatten_list(item))
         else:
             flat_list.append(item)

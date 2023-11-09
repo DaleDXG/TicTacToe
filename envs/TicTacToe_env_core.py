@@ -26,6 +26,11 @@ class TicTacToe_env_core(BoardGameBase):
     num_in_a_row (win_condition, win_length)
     """
 
+    REWARD_COMMON = 0
+    REWARD_WIN = 10
+    REWARD_LOSE = -10
+    REWARD_DUPLICATE_ACTION = -5
+
     def __init__(self, input_config=None):
         """
         description
@@ -79,14 +84,14 @@ class TicTacToe_env_core(BoardGameBase):
         """
         # assert self._flag_termination == False, (
         # 'Cant call step() once episode finished (call reset() instead)')
-        reward = 0
+        reward = self.REWARD_COMMON
         print(action)
         if self._flag_termination == False:
             action = self._convert_to_coordinates(action)
 
             if not self._add_piece(action):
                 print("The position have already occupied")
-                reward = -1
+                reward = self.REWARD_DUPLICATE_ACTION
                 self._flag_termination = True
 
             if self._check_full():
@@ -94,10 +99,14 @@ class TicTacToe_env_core(BoardGameBase):
             if self._check_num_in_a_row_2_direction(action):
                 self._flag_termination = True
                 self.winner = self.current_player
-                reward = 10
+                reward = self.REWARD_WIN
         else:
             if self.current_player == self.winner:
-                reward = 10
+                reward = self.REWARD_WIN
+            elif self.winner == -1: # initial value, no winner
+                reward = self.REWARD_COMMON
+            else:
+                reward = self.REWARD_LOSE
 
         self.previous_player = self.current_player
         # actually, ((current_player - 1) + 1) % num_players + 1
@@ -187,11 +196,11 @@ class TicTacToe_env_core(BoardGameBase):
     
     # add piece according to the turn
     def _add_piece(self, *coordinates):
-        print(coordinates)
-        print(type(coordinates))
+        # print(coordinates)
+        # print(type(coordinates))
         coordinates = self._convert_to_coordinates(coordinates)
         print(coordinates)
-        print(type(coordinates))
+        # print(type(coordinates))
         if self.map[coordinates] == 0:
             if self._gravity != None:
                 coordinates = self._gravity.fall(self.map, coordinates)

@@ -50,18 +50,18 @@ class DQN(object):
     
     def init(self):
         self.num_episode = 0
-        self.num_step = 0
+        self.total_step = 0
         self.replay_size = 2000
+        self.replay_queue = deque(maxlen=self.replay_size)
         if self.flag_static_memory:
-            DQN.replay_queue = deque(maxlen=self.replay_size)
+            # DQN.replay_queue = deque(maxlen=self.replay_size)
             DQN.eval_model = self.build_mlp(self.shape_layers)
             DQN.target_model = self.build_mlp(self.shape_layers)
         else:
-            self.replay_queue = deque(maxlen=self.replay_size)
             self.eval_model = self.build_mlp(self.shape_layers)
             self.target_model = self.build_mlp(self.shape_layers)
 
-        self.epsilon = 1 if self.epsilon_decrement is not None else self.epsilon_min
+        self.epsilon = 1 if self.epsilon_decrement==0 else self.epsilon_min # is not None
 
         self.score_list = []
         self.history = []
@@ -69,8 +69,8 @@ class DQN(object):
     def build_mlp(self, layers_size, is_flatten=False):
 
         assert len(layers_size) > 1, ('Can not produce network with layer less than 2.')
-        print('layers_size : ', layers_size)
-        print('last layer', layers_size[-1])
+        # print('layers_size : ', layers_size)
+        # print('last layer', layers_size[-1])
         model = models.Sequential()
         if is_flatten:
             model.add(layers.Flatten())
@@ -89,17 +89,19 @@ class DQN(object):
     def select_action(self, s):
         """预测动作"""
         # 刚开始时，加一点随机成分，产生更多的状态
-        if np.random.uniform() < self.epsilon - self.num_step * self.epsilon_decrement:
+        if np.random.uniform() < self.epsilon: # self.epsilon - self.total_step * self.epsilon_decrement:
             self.selected_action = np.random.choice(self.shape_layers[-1])
         else:
             q_values = self.eval_model.predict(np.array([s]))[0]
-            print('q_values', str(q_values))
+            # print('q_values', str(q_values))
             self.selected_action = np.argmax(q_values)
-            print('selected action', self.selected_action)
+            # print('selected action', self.selected_action)
+        if self.epsilon_decrement != 0 and self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_decrement
         return self.selected_action
 
     def save_model(self, file_path='model_saved.h5'):
-        print('model saved')
+        # print('model saved')
         self.eval_model.save(file_path)
 
     def remember(self, s, a, next_s, reward):
@@ -110,31 +112,43 @@ class DQN(object):
         self.replay_queue.append((s, a, next_s, reward))
 
     def train(self):
-        if len(self.replay_queue) < self.replay_size:
-            return
-        self.num_step += 1
+        # if len(self.replay_queue) < self.replay_size:
+        #     return
+        self.total_step += 1
         # 每update_freq步，将model的权重赋值给target_model
-        if self.num_step % self.update_freq == 0:
+        if self.total_step % self.update_freq == 0:
             self.target_model.set_weights(self.eval_model.get_weights())
-
-        replay_batch = random.sample(self.replay_queue, self.batch_size)
+        sample_size = 0
+        if len(self.replay_queue) < self.replay_size:
+            sample_size = len(self.replay_queue)
+        else:
+            sample_size = self.replay_size
+        # print('sample_size: ', sample_size)
+        replay_batch = random.sample(self.replay_queue, sample_size)
         s_batch = np.array([replay[0] for replay in replay_batch])
         next_s_batch = np.array([replay[2] for replay in replay_batch])
-
+        # print('s_batch: \n', s_batch)
+        # print('next_s_batch: \n', next_s_batch)
         Q = self.eval_model.predict(s_batch)
+        # print('Q shape: ', str(np.shape(Q)))
+        # print('Q: ', Q)
         Q_next = self.target_model.predict(next_s_batch)
 
         # 使用公式更新训练集中的Q值
         for i, replay in enumerate(replay_batch):
+            # print('i: ', i)
             _, a, _, reward = replay
+            # print('a: ', a)
             Q[i][a] = (1 - self.learning_rate) * Q[i][a] + self.learning_rate * (reward + self.gamma * np.amax(Q_next[i]))
 
         # 传入网络进行训练
-        history = self.model.fit(s_batch, Q, verbose=0)
-        print(history)
+        history = self.eval_model.fit(s_batch, Q, verbose=0)
+        store_his = history.history['mse']
+        print('history: ', type(store_his))
+        print(store_his)
         self.history.append(history.history['mse'])
     
-    def step_reset(self, init_state):
+    def reset(self, init_state):
         self.current_state = init_state
         self.score = 0
 
@@ -151,6 +165,3 @@ class DQN(object):
             self.num_episode += 1
             return True
         return False
-    
-    def opponent_turn_update(self, state, reward, done=False):
-        self.current_state = state

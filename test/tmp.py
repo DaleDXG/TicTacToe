@@ -5,6 +5,8 @@ sys.path.append(os.path.dirname(sys.path[0]))
 
 import util
 import numpy as np
+from collections.abc import Iterable
+from collections import deque
 
 import Config
 from model_baselines.dqn.agent import DQN
@@ -93,6 +95,32 @@ from model_baselines.dqn.agent import DQN
 
 
 
-model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
-                                         epsilon_greedy = 0)
-model = DQN(model_config)
+# a = [[0,0,0],[0,0,0],[0,0,0]]
+# b = np.array([[0,0,0],[0,0,0],[0,0,0]])
+# # print(type(a))
+# # print(isinstance(a, Iterable))
+# print(util.flatten_list(a))
+# print(util.flatten_list(b))
+
+
+
+test_dequeue = deque(maxlen=5)
+for i in range(30):
+    test_dequeue.append(i)
+    print(len(test_dequeue))
+    print(test_dequeue[-1])
+
+
+
+# model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
+#                                          epsilon_greedy = 0)
+# model = DQN(model_config)
+
+# test_a = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+# test_b = [test_a, test_a, test_a, test_a]
+# print(test_b)
+# test_c = np.array([test[0] for test in test_b])
+# print(test_c)
+# np.array([test_a])
+
+# model.eval_model.fit()
