@@ -6,6 +6,10 @@ import pickle
 import numpy as np
 import copy
 from collections.abc import Iterable
+import sys
+import os
+
+run_folder = '' # os.path.dirname(sys.path[0]) # sys.path[0]
 
 # from IPython import display
 # from matplotlib import pyplot as plt
@@ -88,6 +92,10 @@ def setup_logger(name, log_file, level=logging.INFO):
         logger.addHandler(handler)
     
     return logger
+
+
+logger_env = setup_logger('logger_env', run_folder + 'logs/logger_env.log')
+# logger_env.disabled = False
 
 
 # method part

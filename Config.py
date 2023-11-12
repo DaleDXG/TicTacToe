@@ -86,7 +86,7 @@ class InputConfig_Method(InputConfig):
         ## DQN
         self.epsilon_greedy = 0.3
         self.reward_decay = 0.9 # gamma
-        self.memory_size = 500
+        self.memory_size = 2000 # 500
         self.epsilon_greedy_decrement = 0
         self.output_graph = False
         self.update_freq = 200

@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from collections import deque
 
 import Config
-from model_baselines.dqn.agent import DQN
+from model_baselines.dqn.agent01 import DQN
 
 
 # import subprocess

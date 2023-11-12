@@ -28,8 +28,9 @@ class TicTacToe_env_core(BoardGameBase):
 
     REWARD_COMMON = 0
     REWARD_WIN = 10
-    REWARD_LOSE = -10
-    REWARD_DUPLICATE_ACTION = -5
+    REWARD_LOSE = -5
+    REWARD_PLACE_ON_AVAILABLE = 0
+    REWARD_DUPLICATE_ACTION = -20
 
     def __init__(self, input_config=None):
         """
@@ -74,6 +75,7 @@ class TicTacToe_env_core(BoardGameBase):
         self.current_player = 1 # player number start from 1. I forgot why would I setted like this.
         self.previous_player = 0
         self.winner = -1
+        self.duplicate_action_player = -1
 
         return self._get_obs()
     
@@ -85,21 +87,24 @@ class TicTacToe_env_core(BoardGameBase):
         # assert self._flag_termination == False, (
         # 'Cant call step() once episode finished (call reset() instead)')
         reward = self.REWARD_COMMON
-        print(action)
+        # print(action)
+        util.logger_env.info('player ' + str(self.current_player) + ' execute action ' + str(action))
         if self._flag_termination == False:
             action = self._convert_to_coordinates(action)
 
             if not self._add_piece(action):
-                print("The position have already occupied")
+                util.logger_env.info('The position have already occupied')
                 reward = self.REWARD_DUPLICATE_ACTION
                 self._flag_termination = True
+            else:
+                reward = self.REWARD_PLACE_ON_AVAILABLE
 
-            if self._check_full():
-                self._flag_termination = True
-            if self._check_num_in_a_row_2_direction(action):
-                self._flag_termination = True
-                self.winner = self.current_player
-                reward = self.REWARD_WIN
+                if self._check_full():
+                    self._flag_termination = True
+                if self._check_num_in_a_row_2_direction(action):
+                    self._flag_termination = True
+                    self.winner = self.current_player
+                    reward = self.REWARD_WIN
         else:
             if self.current_player == self.winner:
                 reward = self.REWARD_WIN
@@ -118,7 +123,6 @@ class TicTacToe_env_core(BoardGameBase):
         return observation, reward, done, info
     
     def _get_obs(self):
-        self.display_console()
         return {
             'board': self.map
         }
@@ -187,9 +191,12 @@ class TicTacToe_env_core(BoardGameBase):
             winning_check_direction[i] = tuple(winning_check_direction[i])
         return winning_check_direction
 
-    def display_console(self):
+    def display_console(self, map = None):
         # haven't complete
-        print(self.map)
+        if map is None:
+            print(self.map)
+        else:
+            print(map)
         print()
 
     # game logic functions
@@ -199,7 +206,7 @@ class TicTacToe_env_core(BoardGameBase):
         # print(coordinates)
         # print(type(coordinates))
         coordinates = self._convert_to_coordinates(coordinates)
-        print(coordinates)
+        util.logger_env.info('coordinates: ' + str(coordinates))
         # print(type(coordinates))
         if self.map[coordinates] == 0:
             if self._gravity != None:

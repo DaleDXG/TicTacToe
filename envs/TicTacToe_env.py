@@ -5,6 +5,7 @@ import pickle
 import random
 
 from envs.TicTacToe_env_core import TicTacToe_env_core
+import util
 
 
 
@@ -36,11 +37,14 @@ class TicTacToe_env(gym.Env):
         if self.flag_self_play_view and self._env.previous_player != 1:
             info['origin_board'] = observation['board']
             observation['board'] = self.self_play_map_view()
+        # self._env.display_console(observation['board'])
+        util.logger_env.info('\n' + str(observation['board']))
         
         return observation, reward, done, info
     
     def self_play_map_view(self):
-        return (self._env.map != 0) * ((self._env.map - self._env.previous_player) % self._env.num_players + 1)
+        self_view_map = (self._env.map != 0) * ((self._env.map - self._env.previous_player) % self._env.num_players + 1)
+        return self_view_map
     
     def random_policy(self):
         num_left_position = len(self._env.leftover_positions)-1
