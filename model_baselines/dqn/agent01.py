@@ -1,4 +1,6 @@
 
+# agent01 是加入使对象共享网络的版本，方便进行 self-play
+
 # 两种思路：
 # 1 输入state和action输出Q value
 # 2 输入state输出说有可能action的value

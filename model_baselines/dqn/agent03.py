@@ -1,5 +1,5 @@
 
-# agent02 在 01 的基础上，加入了另一个 replay 的存储，以给有奖励值的replay和奖励值为0的replay不同的权重
+# agent03
 
 # 两种思路：
 # 1 输入state和action输出Q value
@@ -21,6 +21,7 @@ train
 from collections import deque
 import random
 import math
+import copy
 import numpy as np
 from tensorflow.keras import models, layers, optimizers, losses
 
@@ -49,21 +50,27 @@ class DQN(object):
         self.epsilon_decrement = input_config.epsilon_greedy_decrement
 
         self.flag_static_memory = input_config.flag_static_memory
+        self.weighted_replay_queue = input_config.weighted_replay_queue
 
         self.init()
     
     def init(self):
         self.num_episode = -1
         self.total_step = 0
+
         self.replay_queue = deque(maxlen=self.replay_size)
-        self.replay_queue_zero = deque(maxlen=self.replay_size)
+        if self.weighted_replay_queue == True:
+            self.replay_queue_zero = deque(maxlen=self.replay_size)
+
         if self.flag_static_memory:
-            # DQN.replay_queue = deque(maxlen=self.replay_size)
-            DQN.eval_model = self.build_mlp(self.shape_layers)
-            DQN.target_model = self.build_mlp(self.shape_layers)
+            operated_entity = DQN
         else:
-            self.eval_model = self.build_mlp(self.shape_layers)
-            self.target_model = self.build_mlp(self.shape_layers)
+            operated_entity = self
+        if self.input_config.network_type == 'mlp':
+            operated_entity.eval_model = self.build_mlp(self.shape_layers)
+            operated_entity.target_model = self.build_mlp(self.shape_layers)
+        elif self.input_config.network_type == 'user_given':
+            pass
 
         self.epsilon = 1 if self.epsilon_decrement==0 else self.epsilon_min # is not None
 
@@ -125,28 +132,39 @@ class DQN(object):
         # 每update_freq步，将model的权重赋值给target_model
         if self.total_step % self.update_freq == 0:
             self.target_model.set_weights(self.eval_model.get_weights())
-        # actually mean the reward is not zero
-        weight_none_zero_sample = 0.8
-        num_none_zero_sample = math.ceil(self.replay_size * weight_none_zero_sample)
-        num_zero_sample = math.floor(self.replay_size * (1 - weight_none_zero_sample))
-        # sample_size = 0
-        if len(self.replay_queue) + len(self.replay_queue_zero) < self.replay_size:
-            replay_batch = []
-            replay_batch.extend(self.replay_queue)
-            replay_batch.extend(self.replay_queue_zero)
-        elif len(self.replay_queue) < num_none_zero_sample:
-            # 非零不够
-            replay_batch = random.sample(self.replay_queue_zero, self.replay_size - len(self.replay_queue))
-            replay_batch.extend(self.replay_queue)
-        elif len(self.replay_queue_zero) < num_zero_sample:
-            # 零不够
-            replay_batch = random.sample(self.replay_queue, self.replay_size - len(self.replay_queue_zero))
-            replay_batch.extend(self.replay_queue_zero)
+
+        if self.weighted_replay_queue:
+            # actually mean the reward is not zero
+            weight_none_zero_sample = 0.8
+            num_none_zero_sample = math.ceil(self.replay_size * weight_none_zero_sample)
+            num_zero_sample = math.floor(self.replay_size * (1 - weight_none_zero_sample))
+            # sample_size = 0
+            if len(self.replay_queue) + len(self.replay_queue_zero) < self.replay_size:
+                replay_batch = []
+                replay_batch.extend(self.replay_queue)
+                replay_batch.extend(self.replay_queue_zero)
+            elif len(self.replay_queue) < num_none_zero_sample:
+                # 非零不够
+                replay_batch = random.sample(self.replay_queue_zero, self.replay_size - len(self.replay_queue))
+                replay_batch.extend(self.replay_queue)
+            elif len(self.replay_queue_zero) < num_zero_sample:
+                # 零不够
+                replay_batch = random.sample(self.replay_queue, self.replay_size - len(self.replay_queue_zero))
+                replay_batch.extend(self.replay_queue_zero)
+            else:
+                # sample_size = self.replay_size
+                # print('sample_size: ', sample_size)
+                replay_batch = random.sample(self.replay_queue, num_none_zero_sample)
+                replay_batch.extend(random.sample(self.replay_queue_zero, num_zero_sample))
         else:
-            # sample_size = self.replay_size
+            sample_size = 0
+            if len(self.replay_queue) < self.replay_size:
+                sample_size = len(self.replay_queue)
+            else:
+                sample_size = self.replay_size
             # print('sample_size: ', sample_size)
-            replay_batch = random.sample(self.replay_queue, num_none_zero_sample)
-            replay_batch.extend(random.sample(self.replay_queue_zero, num_zero_sample))
+            replay_batch = random.sample(self.replay_queue, sample_size)
+
         s_batch = np.array([replay[0] for replay in replay_batch])
         next_s_batch = np.array([replay[2] for replay in replay_batch])
         # print('s_batch: \n', s_batch)

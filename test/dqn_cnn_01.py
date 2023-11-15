@@ -1,13 +1,13 @@
 import sys
 import os
 sys.path.append(os.path.dirname(sys.path[0]))
-import numpy as np
+
 
 import Config
 import util
 from envs.TicTacToe_env import TicTacToe_env
+from build_network_functions import build_network_00 as build
 from model_baselines.dqn.agent02 import DQN
-from model_baselines.dqn.process import dqn_mlp_process
 from model_baselines.dqn.process import dqn_inturn_multiplayer_process
 
 
@@ -20,7 +20,9 @@ model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
                                          max_episodes=1000000,
                                          epsilon_greedy=0.05,
                                          epsilon_greedy_decrement=0.001,
-                                         flag_static_memory=True)
+                                         function_build_cnn = build.build_cnn_00,
+                                         flag_static_memory=True,
+                                         weighted_replay_queue=True)
 # model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
 #                                          flag_static_memory=True)
 agent_01 = DQN(model_config)
@@ -40,7 +42,6 @@ def wrap_env_random_3t():
     state = util.flatten_list(observation['board'])
     return state, reward, done, info
 
-# dqn_mlp_process(wrap_env_reset_mlp_3t, wrap_env_step_mlp_3t, wrap_env_random_3t, agent_01, model_config)
 dqn_inturn_multiplayer_process(wrap_env_reset_mlp_3t, wrap_env_step_mlp_3t, [agent_01, agent_02], model_config)
 
 env.close()

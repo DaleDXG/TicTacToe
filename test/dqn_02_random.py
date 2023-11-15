@@ -17,7 +17,6 @@ env_config = Config.InputConfig_Env(size=3, num_dim=2,
 env = TicTacToe_env(env_config)
 
 model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
-                                         max_episodes=1000000,
                                          epsilon_greedy=0.05,
                                          epsilon_greedy_decrement=0.001,
                                          flag_static_memory=True)

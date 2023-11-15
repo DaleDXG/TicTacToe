@@ -66,12 +66,14 @@ class InputConfig(object):
 class InputConfig_Method(InputConfig):
 
     # loss 可以直接在 compile 里用tf.keras.losses对象
+    network_types = ['mlp', 'user_given']
     optimizer_type = ['adam']
     loss_type = ['binary_crossentropy', 'mse', 'sparse_categorical_crossentropy']
 
 
     def __init__(self, **kwargs):
         # input params
+        ## common
         self.env_name = 'TicTacToe'
         self.learning_rate = 0.001 # 1
         self.num_epochs = 10
@@ -79,6 +81,8 @@ class InputConfig_Method(InputConfig):
         self.max_episodes = 2000
         self.max_steps_per_episode = 1000
         self.network_type = 'mlp'
+        self.flag_static_memory = False # 是否整个类使用公共的网络，以便做self-play
+        self.weighted_replay_queue = False # 是否使用两个队列，分别记录奖励为零和不为零的条目
         ## agent params
         self.shape_layers = None
         self.shape_action = None
@@ -90,13 +94,14 @@ class InputConfig_Method(InputConfig):
         self.epsilon_greedy_decrement = 0
         self.output_graph = False
         self.update_freq = 200
-        self.flag_static_memory = False
         ## MLP
         self.layers_size = None # (9,6,1) for 9 inputs, 6 hiddens, 1 outputs
         self.network = None
         self.is_flatten = False
         self.loss = None
         self.optimizer = None
+        ## CNN
+        self.function_build_cnn = None
         ## MCTS
         self.c_puct = 1
 
