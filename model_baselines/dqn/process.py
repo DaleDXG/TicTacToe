@@ -34,17 +34,17 @@ def dqn_mlp_process(env_reset, env_step, env_random_step, agent, input_config):
 
 colour_set = ['green', 'blue', 'yellow', 'red', 'purple']
 
-def dqn_inturn_multiplayer_process(env_reset, env_step, agents, input_config):
+def dqn_inturn_multiplayer_process(env_reset, env_step, agents, max_episodes):
 
-    episodes = input_config.max_episodes # 1000
+    # max_episodes = input_config.max_episodes # 1000
     model_save_iter = 200
     num_agents = len(agents)
     assert num_agents > 0, ('There is no agent participating the game.')
 
-    flag_static_memory = input_config.flag_static_memory
+    # flag_static_memory = input_config.flag_static_memory
     # idx_previous_agent = -1
-    for i in range(episodes):
-        util.logger_env.info('\n-----New episode-----')
+    for num_episode in range(max_episodes):
+        util.logger_env.info('\n-----new_episode-----')
         step = 0
         done = False
         idx_current_agent = 0
@@ -57,7 +57,7 @@ def dqn_inturn_multiplayer_process(env_reset, env_step, agents, input_config):
         init_state = env_reset()
         newest_state = init_state
         for agent in agents:
-            util.logger_env.info('agent reset')
+            util.logger_env.info('agent_reset')
             agent.reset(init_state)
         while True:
             if not done:
@@ -67,7 +67,7 @@ def dqn_inturn_multiplayer_process(env_reset, env_step, agents, input_config):
             newest_state, reward, done, info = env_step(action)
             cache_replay.append([newest_state, reward, done, info])
             if step > num_agents - 2: # >= num_agents - 1:
-                util.logger_env.info('agent ' + str(idx_next_agent) + ' step')
+                util.logger_env.info('agent_' + str(idx_next_agent) + '_step')
                 agents[idx_next_agent].step(newest_state, cache_replay[0][1], cache_replay[0][2], cache_replay[0][3])
 
             # idx_previous_agent = idx_current_agent
@@ -82,8 +82,13 @@ def dqn_inturn_multiplayer_process(env_reset, env_step, agents, input_config):
         # if np.mean(score_list[-10:]) > -160:
         #     agent.save_model()
         #     break
-        if episodes % model_save_iter == 0:
-            agents[0].save_model('model_dqn_' + str(episodes) + '.h5')
+        if num_episode % model_save_iter == 0:
+            agents[0].save_model('model_dqn_' + agents[0].name + '_ep' + str(num_episode) + '.h5')
+
     for i, agent in enumerate(agents):
         plt.plot(agent.history, color=colour_set[i])
+    plt.show()
+
+    for i, agent in enumerate(agents):
+        plt.plot(agent.score_list, color=colour_set[i])
     plt.show()

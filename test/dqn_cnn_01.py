@@ -7,26 +7,22 @@ import Config
 import util
 from envs.TicTacToe_env import TicTacToe_env
 from build_network_functions import build_network_00 as build
-from model_baselines.dqn.agent02 import DQN
+from model_baselines.random.agent import RandomAgent
+from model_baselines.dqn.agent03 import DQN
 from model_baselines.dqn.process import dqn_inturn_multiplayer_process
-
 
 env_config = Config.InputConfig_Env(size=3, num_dim=2,
                                     flag_self_play_view=True,
                                     flag_compute_used_left=True)
 env = TicTacToe_env(env_config)
 
-model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
+model_config_cnn = Config.InputConfig_Method(shape_layers=(9,9,9,9),
                                          max_episodes=1000000,
                                          epsilon_greedy=0.05,
                                          epsilon_greedy_decrement=0.001,
                                          function_build_cnn = build.build_cnn_00,
-                                         flag_static_memory=True,
+                                        #  flag_static_memory=True,
                                          weighted_replay_queue=True)
-# model_config = Config.InputConfig_Method(shape_layers=(9,9,9,9),
-#                                          flag_static_memory=True)
-agent_01 = DQN(model_config)
-agent_02 = DQN(model_config)
 
 def wrap_env_reset_mlp_3t():
     observation = env.reset()
@@ -42,7 +38,13 @@ def wrap_env_random_3t():
     state = util.flatten_list(observation['board'])
     return state, reward, done, info
 
-dqn_inturn_multiplayer_process(wrap_env_reset_mlp_3t, wrap_env_step_mlp_3t, [agent_01, agent_02], model_config)
+agent_01 = DQN('cnn_type_00_0', model_config_cnn)
+agent_random = RandomAgent(env_type='TicTacToe', env_select_action=env.select_random_action)
+# agent_02 = DQN(model_config_cnn)
+
+dqn_inturn_multiplayer_process(wrap_env_reset_mlp_3t, wrap_env_step_mlp_3t, [agent_01, agent_random], model_config_cnn.max_episodes)
+
+env.plot_rating()
 
 env.close()
 

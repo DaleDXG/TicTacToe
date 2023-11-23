@@ -21,7 +21,7 @@ train
 from collections import deque
 import random
 import math
-import copy
+# import copy
 import numpy as np
 from tensorflow.keras import models, layers, optimizers, losses
 
@@ -29,8 +29,9 @@ import util
 
 class DQN(object):
 
-    def __init__(self, input_config=None):
+    def __init__(self, name='', input_config=None):
         """"""
+        self.name = name
         self.input_config = input_config
 
         self.shape_layers = input_config.shape_layers
@@ -49,6 +50,8 @@ class DQN(object):
         self.epsilon_min = input_config.epsilon_greedy # 
         self.epsilon_decrement = input_config.epsilon_greedy_decrement
 
+        if input_config.function_build_cnn != None:
+            self.function_build_cnn = input_config.function_build_cnn
         self.flag_static_memory = input_config.flag_static_memory
         self.weighted_replay_queue = input_config.weighted_replay_queue
 
@@ -70,7 +73,8 @@ class DQN(object):
             operated_entity.eval_model = self.build_mlp(self.shape_layers)
             operated_entity.target_model = self.build_mlp(self.shape_layers)
         elif self.input_config.network_type == 'user_given':
-            pass
+            operated_entity.eval_model = self.function_build_cnn()
+            operated_entity.target_model = self.function_build_cnn()
 
         self.epsilon = 1 if self.epsilon_decrement==0 else self.epsilon_min # is not None
 
@@ -184,7 +188,7 @@ class DQN(object):
         # 传入网络进行训练
         history = self.eval_model.fit(s_batch, Q, verbose=0)
         store_his = history.history['mse'][0]
-        util.logger_env.info('history: ' + str(store_his))
+        util.logger_env.info('history:' + str(store_his))
         self.history.append(history.history['mse'])
     
     def reset(self, init_state):
@@ -201,6 +205,6 @@ class DQN(object):
         self.current_state = next_s
         if done:
             self.score_list.append(self.score)
-            util.logger_env.info('episode:' + str(self.num_episode) + ' score:' + str(self.score) + ' max:' + str(max(self.score_list)))
+            util.logger_env.info('episode:' + str(self.num_episode) + '_score:' + str(self.score) + '_max:' + str(max(self.score_list)))
             return True
         return False

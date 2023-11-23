@@ -11,6 +11,8 @@ from collections import deque
 import Config
 from model_baselines.dqn.agent01 import DQN
 
+print([1] * 10)
+
 
 # import subprocess
 # import time
@@ -104,11 +106,11 @@ from model_baselines.dqn.agent01 import DQN
 
 
 
-test_dequeue = deque(maxlen=5)
-for i in range(30):
-    test_dequeue.append(i)
-    print(len(test_dequeue))
-    print(test_dequeue[-1])
+# test_dequeue = deque(maxlen=5)
+# for i in range(30):
+#     test_dequeue.append(i)
+#     print(len(test_dequeue))
+#     print(test_dequeue[-1])
 
 
 

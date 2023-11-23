@@ -4,6 +4,7 @@ from Config import InputConfig
 import util
 
 import numpy as np
+import trueskill
 
 
 
@@ -49,12 +50,16 @@ class TicTacToe_env_core(BoardGameBase):
         self.len_map = input_config['len_map']
         self.num_players = input_config['num_players']
 
+        self.num_episode = 0
+
         self._gravity = None
         if input_config['gravity_mode'] != 'no_gravity':
             self._gravity = GravitySetting(input_config)
 
         # winning checking direction
         self._winning_check_direction = self._get_winning_check_directions(self.num_dim)
+
+        self.init_rating()
         
         self.reset()
 
@@ -76,6 +81,7 @@ class TicTacToe_env_core(BoardGameBase):
         self.previous_player = 0
         self.winner = -1
         self.duplicate_action_player = -1
+        self.num_episode += 1
 
         return self._get_obs()
     
@@ -88,12 +94,12 @@ class TicTacToe_env_core(BoardGameBase):
         # 'Cant call step() once episode finished (call reset() instead)')
         reward = self.REWARD_COMMON
         # print(action)
-        util.logger_env.info('player ' + str(self.current_player) + ' execute action ' + str(action))
+        util.logger_env.info('player_' + str(self.current_player) + '_execute_action_' + str(action))
         if self._flag_termination == False:
             action = self._convert_to_coordinates(action)
 
             if not self._add_piece(action):
-                util.logger_env.info('The position have already occupied')
+                util.logger_env.info('The_position_have_already_occupied')
                 reward = self.REWARD_DUPLICATE_ACTION
                 self._flag_termination = True
             else:
@@ -105,6 +111,9 @@ class TicTacToe_env_core(BoardGameBase):
                     self._flag_termination = True
                     self.winner = self.current_player
                     reward = self.REWARD_WIN
+                
+            if self._flag_termination:
+                self.update_rating(self.winner - 1)
         else:
             if self.current_player == self.winner:
                 reward = self.REWARD_WIN
@@ -129,7 +138,8 @@ class TicTacToe_env_core(BoardGameBase):
     
     def _get_info(self):
         return {
-            'leftover_actions': self.leftover_positions
+            'leftover_actions': self.leftover_positions,
+            'rating': self.players_rating
         }
     
     # util functions
@@ -206,7 +216,7 @@ class TicTacToe_env_core(BoardGameBase):
         # print(coordinates)
         # print(type(coordinates))
         coordinates = self._convert_to_coordinates(coordinates)
-        util.logger_env.info('coordinates: ' + str(coordinates))
+        util.logger_env.info('coordinates:' + str(coordinates))
         # print(type(coordinates))
         if self.map[coordinates] == 0:
             if self._gravity != None:
@@ -283,3 +293,33 @@ class TicTacToe_env_core(BoardGameBase):
             if board.ravel()[i] == 0:
                 return False
         return True
+    
+    def init_rating(self):
+        self.true_skill_env = trueskill.TrueSkill()
+        self.players_mu = []
+        self.players_sigma = []
+        
+        self.players_rating = []
+        for _ in range(self.num_players):
+            # self.players_rating.append(trueskill.Rating())
+            self.players_rating.append((self.true_skill_env.create_rating(),))
+            self.players_mu.append([])
+            self.players_sigma.append([])
+        self.save_trueskill_info()
+    
+    def update_rating(self, winner):
+        if winner >= 0:
+            ranks = [1] * self.num_players
+            ranks[winner] = 0
+        else:
+            ranks = [0] * self.num_players
+        self.players_rating = self.true_skill_env.rate(self.players_rating, ranks=ranks)
+        self.save_trueskill_info()
+    
+    def save_trueskill_info(self):
+        util.logger_trueskill.info('-----new_result_' + str(self.num_episode) + '-----')
+        for i, rating in enumerate(self.players_rating):
+            # print(rating[0])
+            util.logger_trueskill.info('player' + str(i) + ':' + str(rating))
+            self.players_mu[i].append(rating[0].mu)
+            self.players_sigma[i].append(rating[0].sigma)

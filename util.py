@@ -1,13 +1,20 @@
 
-import Config
+# import Config
 import logging
 # import tensorflow as tf
-import pickle
+# import pickle
 import numpy as np
-import copy
+import pandas as pd
+# import copy
 from collections.abc import Iterable
-import sys
-import os
+# import sys
+# import os
+
+import trueskill
+import itertools
+import math
+
+import matplotlib.pyplot as plt
 
 run_folder = '' # os.path.dirname(sys.path[0]) # sys.path[0]
 
@@ -78,6 +85,15 @@ def flatten_list(nested_list):
             flat_list.append(item)
     return flat_list
 
+# 绘图 plot
+
+colour_set = ['green', 'blue', 'yellow', 'red', 'purple']
+
+def plot(muti_data):
+    for i, data in enumerate(muti_data):
+        plt.plot(data, color=colour_set[i])
+    plt.show()
+
 ## logging part
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -95,7 +111,23 @@ def setup_logger(name, log_file, level=logging.INFO):
 
 
 logger_env = setup_logger('logger_env', run_folder + 'logs/logger_env.log')
+logger_trueskill = setup_logger('logger_trueskill', run_folder + 'logs/logger_trueskill.log')
 # logger_env.disabled = False
+
+def read_log_trueskill(file_path):
+    df = pd.read_csv(file_path, delimiter='\n')
+
+
+# TrueSkill
+
+def win_probability(team1, team2):
+    BETA = trueskill.global_env().beta
+    delta_mu = sum(r.mu for r in team1) - sum(r.mu for r in team2)
+    sum_sigma = sum(r.sigma ** 2 for r in itertools.chain(team1, team2))
+    size = len(team1) + len(team2)
+    denom = math.sqrt(size * (BETA * BETA) + sum_sigma)
+    ts = trueskill.global_env()
+    return ts.cdf(delta_mu / denom)
 
 
 # method part
