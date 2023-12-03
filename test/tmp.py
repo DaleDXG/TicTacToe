@@ -11,7 +11,22 @@ from collections import deque
 import Config
 from model_baselines.dqn.agent01 import DQN
 
-print([1] * 10)
+
+
+print(util.flatten_list((2, (2,3,4,5))))
+
+# import tensorflow as tf
+# import keras
+# import keras.optimizers
+
+# keras.optimizers.
+
+
+
+# print([1] * 10)
+
+# print(np.zeros(1, np.integer))
+
 
 
 # import subprocess
@@ -126,3 +141,22 @@ print([1] * 10)
 # np.array([test_a])
 
 # model.eval_model.fit()
+
+# prob = 1 - 0.0016
+# cu = 1
+
+# for i in range(100):
+#     cu *= prob
+#     if i % 10 == 0:
+#         print(str(i) + ' ' + str(1 - cu))
+
+
+# print(len('2023-11-18 20:20:47,825 INFO player0:(trueskill.Rating(mu='))
+# print(len('2023-11-18 20:20:49,365 INFO player0:(trueskill.Rating(mu=25.000, sigma='))
+
+# list = [0,1,2,3,4,5,6,7,8,9,10,11]
+
+# for i in range(0, len(list), 3):
+#     chunk = list[i : i+3]
+#     print(len(chunk))
+#     print(sum(chunk) / len(chunk))

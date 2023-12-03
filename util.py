@@ -1,11 +1,11 @@
 
 # import Config
 import logging
-# import tensorflow as tf
+import tensorflow as tf
 # import pickle
 import numpy as np
 import pandas as pd
-# import copy
+import copy
 from collections.abc import Iterable
 # import sys
 # import os
@@ -17,6 +17,9 @@ import math
 import matplotlib.pyplot as plt
 
 run_folder = '' # os.path.dirname(sys.path[0]) # sys.path[0]
+
+# for MCTS
+C = 1 / math.sqrt(2)
 
 # from IPython import display
 # from matplotlib import pyplot as plt
@@ -85,6 +88,65 @@ def flatten_list(nested_list):
             flat_list.append(item)
     return flat_list
 
+
+
+# identities state
+
+# Flag_flip_lr = False
+# Flag_flip_ud = False
+# Flag_rotate = False
+# Flag_diagonal = False
+
+# class GameState:
+
+#     def __init__(self)
+
+# def identities(self, state, actionValues):
+# 		identities = [(state,actionValues)]
+
+# 		currentBoard = state.board
+# 		currentAV = actionValues
+
+#         # if Flag_rotate:
+#         #     if Flag_flip_lr:
+#         #          current
+#         #     for i in range(3):
+#         #         pass
+#         # else:
+#         #     if Flag_flip_lr:
+#         #         pass
+
+# 		identities.append((GameState(currentBoard, state.playerTurn), currentAV))
+
+# 		return identities
+
+# def flip_rl(list, state, action_value):
+#      current
+
+# def flip_ud(list, state, action_value):
+#      pass
+
+# def flip_diagonal(list, state, action_value):
+#     pass
+
+# loss
+def softmax_cross_entropy_with_logits(y_true, y_pred):
+
+	p = y_pred
+	pi = y_true
+
+	zero = tf.zeros(shape = tf.shape(pi), dtype=tf.float32)
+	where = tf.equal(pi, zero)
+
+	negatives = tf.fill(tf.shape(pi), -100.0) 
+	p = tf.where(where, negatives, p)
+
+	loss = tf.nn.softmax_cross_entropy_with_logits(labels = pi, logits = p)
+
+	return loss
+
+
+
 # 绘图 plot
 
 colour_set = ['green', 'blue', 'yellow', 'red', 'purple']
@@ -111,11 +173,72 @@ def setup_logger(name, log_file, level=logging.INFO):
 
 
 logger_env = setup_logger('logger_env', run_folder + 'logs/logger_env.log')
+logger_main = setup_logger('logger_main', run_folder + 'logs/logger_main.log')
+logger_tourney = setup_logger('logger_tourney', run_folder + 'logs/logger_tourney.log')
+logger_model = setup_logger('logger_model', run_folder + 'logs/logger_model.log')
+logger_mcts = setup_logger('logger_mcts', run_folder + 'logs/logger_mcts.log')
 logger_trueskill = setup_logger('logger_trueskill', run_folder + 'logs/logger_trueskill.log')
 # logger_env.disabled = False
 
-def read_log_trueskill(file_path):
-    df = pd.read_csv(file_path, delimiter='\n')
+def read_log_trueskill(file_path, num_agents):
+    count_iter = num_agents + 1
+    index = 0
+    mu = []
+    sigma = []
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if index % count_iter == 1:
+                mu.append(float(line[58:64]))
+                sigma.append(float(line[72:77]))
+                # print(index)
+                # print('mu:')
+                # print(line[58:64])
+                # print('sigma:')
+                # print(line[72:77])
+            index += 1
+    plt.plot(mu, label='mu', color='green')
+    plt.show()
+    plt.plot(sigma, label='sigma', color='green')
+    plt.show()
+
+def read_log_env(file_path, num_agents):
+    index = 0
+    num_episode = -1
+    num_step = 0
+    history = []
+    score = []
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            # print(index)
+            if 'new_episode' in line:
+                num_episode += 1
+            if 'history:' in line:
+                # print(line[37:])
+                history.append(float(line[37:]))
+                num_step += 1
+            if 'score:' in line:
+                start = line.find('score:') + 6
+                end = line.find('_')
+                end = line.find('_', end + 1)
+                # print(line[start:end])
+                score.append(float(line[start:end]))
+            index += 1
+    history_mean = []
+    score_mean = []
+    chunk_size = 100
+    for i in range(0, len(history), chunk_size):
+        chunk = history[i : i+chunk_size]
+        history_mean.append(sum(chunk) / len(chunk) if len(chunk)>0 else 1)
+    chunk_size = 50
+    for i in range(0, len(score), chunk_size):
+        chunk = score[i : i+chunk_size]
+        score_mean.append(sum(chunk) / len(chunk) if len(chunk)>0 else 1)
+    plt.plot(history_mean, label='mse', color='green')
+    plt.show()
+    plt.plot(score_mean, label='score', color='green')
+    plt.show()
 
 
 # TrueSkill

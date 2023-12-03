@@ -3,8 +3,13 @@
 # Python related files
 *test*.py
 __pycache__
-data/
 
 # IDE
 .idea
 .vs*
+
+# Data
+data/
+logs/
+.log
+.png
