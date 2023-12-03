@@ -223,6 +223,9 @@ class Residual_CNN(Gen_Model):
 
 		main_input = Input(shape = self.input_dim, name = 'main_input')
 
+		print('1' + str(main_input))
+		print('2' + str(self.hidden_layers[0]['filters']))
+		print('3' + str(self.hidden_layers[0]['kernel_size']))
 		x = self.conv_layer(main_input, self.hidden_layers[0]['filters'], self.hidden_layers[0]['kernel_size'])
 
 		if len(self.hidden_layers) > 1:
@@ -242,6 +245,8 @@ class Residual_CNN(Gen_Model):
 		return model
 
 	def convertToModelInput(self, state):
-		inputToModel =  state.binary #np.append(state.binary, [(state.playerTurn + 1)/2] * self.input_dim[1] * self.input_dim[2])
-		inputToModel = np.reshape(inputToModel, self.input_dim) 
-		return (inputToModel)
+		# dale 紧急处理
+		# inputToModel = state.binary #np.append(state.binary, [(state.playerTurn + 1)/2] * self.input_dim[1] * self.input_dim[2])
+		# inputToModel = np.reshape(inputToModel, self.input_dim) 
+		# return (inputToModel)
+		return np.reshape(state, self.input_dim) 

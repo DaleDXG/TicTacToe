@@ -13,9 +13,9 @@ import Config
 import util
 from envs.TicTacToe_env import TicTacToe_env
 from model_baselines.resnet.resnet import Residual_CNN
-from model_baselines.mcts.mcts import MCTS
+import model_baselines.mcts.mcts as mcts
 from model_baselines.mcts.memory import Memory
-from model_baselines.mcts.agent01 import Agent
+from model_baselines.mcts.agent import Agent
 
 def wfs(root_stats):
     print('start writting')
@@ -55,9 +55,14 @@ def process(env, mcts):
 def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None): # , goes_first = 0
 
     # env = Game()
-    scores = {players[1].name:0, "drawn": 0, players[2].name:0}
+    # if players[1]['name'] == players[2]['name']:
+    #     scores = {players[1]['name'] + '1':0, "drawn": 0, players[2]['name'] + '2':0}
+    # else:
+    #     scores = {players[1]['name']:0, "drawn": 0, players[2]['name']:0}
+    scores = {'player1':0, "drawn": 0, 'player2':0}
     sp_scores = {'sp':0, "drawn": 0, 'nsp':0}
-    points = {players[1].name:[], players[2].name:[]}
+    # points = {players[1].name:[], players[2].name:[]}
+    points = {'player1':[], 'player2':[]}
     env_core = env._env
 
     for e in range(EPISODES):
@@ -71,7 +76,8 @@ def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None)
         
         done = 0
         turn = 0
-        for player in players:
+        for value in players.values():
+            player = value['agent']
             player.mcts = None
 
         logger.info('\n' + str(env_core.map))
@@ -79,13 +85,17 @@ def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None)
 
         while done == 0:
             turn = turn + 1
+            player_turn = env_core.current_player
     
             #### Run the MCTS algo and return an action
+            # 也就是说，这里实际应该只走了一步
+            # 也很麻烦，又要走出去，又只能走一步
+            players[env_core.current_player]['agent'].set_env(env)
             if turn < turns_until_tau0:
                 # dale 注意取得当前回合的方式 我的环境没有GameState.playerTurn，记录当前回合更不是通过toggle正负的方式实现的
-                action, pi, MCTS_value, NN_value = players[env_core.current_player]['agent'].act(state, 1)
+                action, pi, MCTS_value, NN_value = players[env_core.current_player]['agent'].act(state, player_turn, 1)
             else:
-                action, pi, MCTS_value, NN_value = players[env_core.current_player]['agent'].act(state, 0)
+                action, pi, MCTS_value, NN_value = players[env_core.current_player]['agent'].act(state, player_turn, 0)
 
             logger.info('action: %d', action)
             # for r in range(input_dims): # env.grid_shape[0]
@@ -93,10 +103,11 @@ def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None)
             # logger.info('MCTS perceived value for %s: %f', state.pieces[str(state.playerTurn)] ,np.round(MCTS_value,2))
             # logger.info('NN perceived value for %s: %f', state.pieces[str(state.playerTurn)] ,np.round(NN_value,2))
             # logger.info('====================')
-
+            
             ### Do the action
             state, reward, done, _ = env.step(action) #the value of the newState from the POV of the new playerTurn i.e. -1 if the previous player played a winning move
-            
+            state = state['board']
+
             # env.gameState.render(logger)
             logger.info('\n' + str(env_core.map))
 
@@ -104,16 +115,16 @@ def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None)
                 ####Commit the move to memory
                 # memory.commit_stmemory(env.identities, state, pi)
                 memory.stmemory.append({
-                    'inputs': state,
-                    'action_values': action_values,
+                    'state': state,
+                    'pi': pi,
                     'player_turn': player_turn
                     })
 
-            if done == 1: 
+            if done == 1:
                 if memory != None:
                     #### If the game is finished, assign the values correctly to the game moves
                     for move in memory.stmemory:
-                        if move['player_turn'] == env_core.current_player: # state.playerTurn:
+                        if move['player_turn'] == player_turn: # state.playerTurn:
                             move['value'] = reward
                         else:
                             move['value'] = -reward
@@ -122,31 +133,30 @@ def playMatches(env, players, EPISODES, logger, turns_until_tau0, memory = None)
 
                 # 胜利
                 if reward == 10:
-                    logger.info('%s WINS!', players[state.playerTurn]['name'])
-                    scores[players[state.playerTurn]['name']] = scores[players[state.playerTurn]['name']] + 1
-                    if state.playerTurn == 1: 
+                    logger.info('%s WINS!', 'player'+str(player_turn))
+                    scores['player'+str(player_turn)] = scores['player'+str(player_turn)] + 1
+                    if player_turn == 1: 
                         sp_scores['sp'] = sp_scores['sp'] + 1
                     else:
                         sp_scores['nsp'] = sp_scores['nsp'] + 1
-
                 # 失败
-                elif reward == -5:
-                    logger.info('%s WINS!', players[-state.playerTurn]['name'])
-                    scores[players[-state.playerTurn]['name']] = scores[players[-state.playerTurn]['name']] + 1
-               
-                    if state.playerTurn == 1: 
+                elif reward < 0:
+                    logger.info('%s WINS!', 'player'+str(env_core.current_player))
+                    # -state.playerTurn = env_core.current_player
+                    scores['player'+str(env_core.current_player)] = scores['player'+str(env_core.current_player)] + 1
+
+                    if player_turn == 1: 
                         sp_scores['nsp'] = sp_scores['nsp'] + 1
                     else:
                         sp_scores['sp'] = sp_scores['sp'] + 1
-
                 else:
                     logger.info('DRAW...')
                     scores['drawn'] = scores['drawn'] + 1
                     sp_scores['drawn'] = sp_scores['drawn'] + 1
 
                 pts = state.score
-                points[players[state.playerTurn]['name']].append(pts[0])
-                points[players[-state.playerTurn]['name']].append(pts[1])
+                points['player'+str(player_turn)].append(pts[0])
+                points['player'+str(env_core.current_player)].append(pts[1])
 
     return (scores, memory, points, sp_scores)
 
@@ -162,15 +172,19 @@ if __name__ == "__main__":
     
     env = TicTacToe_env(input_config_env)
 
-    init_state = env.reset
-    mcts = MCTS(init_state, util.C)
+    init_state = env.reset()['board']
+    root = mcts.Node(init_state, 1)
+    mcts_ = mcts.MCTS(root, util.C)
 
     memory = Memory(Config.MEMORY_SIZE)
 
     # 输入是 grid_shape
     # 这里还不清楚为什么输入的shape需要在前面加一个 2
-    current_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((2, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
-    best_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((2, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
+    # current_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((2, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
+    # best_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((2, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
+    
+    current_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((1, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
+    best_NN = Residual_CNN(Config.REG_CONST, Config.LEARNING_RATE, util.flatten_list((1, input_config_env['dims'])), util.shape_to_num(input_config_env['dims']), Config.HIDDEN_CNN_LAYERS)
 
     best_player_version = 0
     best_NN.model.set_weights(current_NN.model.get_weights())

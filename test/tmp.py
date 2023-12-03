@@ -13,7 +13,9 @@ from model_baselines.dqn.agent01 import DQN
 
 
 
-print(util.flatten_list((2, (2,3,4,5))))
+a = util.flatten_list((2, [2,3,4,5]))
+print(a)
+print(util.shape_to_num(a))
 
 # import tensorflow as tf
 # import keras
